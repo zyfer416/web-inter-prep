@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}Features - Web-Inter-Prep{% endblock %}
+
+{% block content %}
+<div class="hero-section bg-gradient-primary text-white py-5">
+    <div class="container text-center">
+        <h1 class="display-4 fw-bold mb-4">Explore Our Features</h1>
+        <p class="lead mb-4">
+            Discover all the powerful tools and features available in Web-Inter-Prep
+        </p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row mb-5">
+        <div class="col-12 text-center">
+            <h2 class="mb-4">Navigation & More Menu</h2>
+            <p class="lead mb-4">Try clicking the "More" button in the navigation bar above to see our enhanced dropdown menu!</p>
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Tip:</strong> The "More" menu includes Company Prep, AI Interview, Resume, Calendar, DSA, Resources, and Career Roadmap features.
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-robot text-primary display-4 mb-3"></i>
+                    <h5 class="card-title">AI Interview</h5>
+                    <p class="card-text">Experience realistic interview simulations with our AI-powered system. Practice with intelligent questions and get instant feedback.</p>
+                    <button class="btn btn-primary" onclick="showComingSoon('AI Interview')" disabled>
+                        <i class="fas fa-clock me-2"></i>Coming Soon
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-code text-success display-4 mb-3"></i>
+                    <h5 class="card-title">DSA Practice</h5>
+                    <p class="card-text">Master Data Structures and Algorithms with our comprehensive question bank. Practice coding problems and system design.</p>
+                    <a href="{{ url_for('practice') if session.user_id else url_for('login') }}" class="btn btn-success">
+                        <i class="fas fa-code me-2"></i>Start Practicing
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-building text-info display-4 mb-3"></i>
+                    <h5 class="card-title">Company Prep</h5>
+                    <p class="card-text">Get company-specific interview preparation materials. Learn about different company cultures and interview processes.</p>
+                    <button class="btn btn-info" onclick="showComingSoon('Company Prep')" disabled>
+                        <i class="fas fa-clock me-2"></i>Coming Soon
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-file-alt text-warning display-4 mb-3"></i>
+                    <h5 class="card-title">Resume Builder</h5>
+                    <p class="card-text">Create professional resumes with our AI-powered builder. Get tips and suggestions to make your resume stand out.</p>
+                    <button class="btn btn-warning" onclick="showComingSoon('Resume Builder')" disabled>
+                        <i class="fas fa-clock me-2"></i>Coming Soon
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-calendar-check text-danger display-4 mb-3"></i>
+                    <h5 class="card-title">Interview Calendar</h5>
+                    <p class="card-text">Organize your interview schedule with our smart calendar. Set reminders and track your preparation progress.</p>
+                    <button class="btn btn-danger" onclick="showComingSoon('Interview Calendar')" disabled>
+                        <i class="fas fa-clock me-2"></i>Coming Soon
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-route text-primary display-4 mb-3"></i>
+                    <h5 class="card-title">Career Roadmap</h5>
+                    <p class="card-text">Plan your career path with our comprehensive roadmap. Get guidance on skills, certifications, and career progression.</p>
+                    <a href="{{ url_for('career_roadmap') }}" class="btn btn-primary">
+                        <i class="fas fa-route me-2"></i>Generate Roadmap
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-12 text-center">
+            <h3 class="mb-4">Enhanced User Experience</h3>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <div class="d-flex align-items-center justify-content-center">
+                        <i class="fas fa-magic text-primary me-3 display-6"></i>
+                        <div class="text-start">
+                            <h6 class="mb-1">Smooth Animations</h6>
+                            <p class="text-muted mb-0">Beautiful transitions and hover effects</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="d-flex align-items-center justify-content-center">
+                        <i class="fas fa-mobile-alt text-success me-3 display-6"></i>
+                        <div class="text-start">
+                            <h6 class="mb-1">Responsive Design</h6>
+                            <p class="text-muted mb-0">Works perfectly on all devices</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="d-flex align-items-center justify-content-center">
+                        <i class="fas fa-palette text-info me-3 display-6"></i>
+                        <div class="text-start">
+                            <h6 class="mb-1">Modern UI</h6>
+                            <p class="text-muted mb-0">Clean, professional interface</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="d-flex align-items-center justify-content-center">
+                        <i class="fas fa-bolt text-warning me-3 display-6"></i>
+                        <div class="text-start">
+                            <h6 class="mb-1">Fast Performance</h6>
+                            <p class="text-muted mb-0">Optimized for speed and efficiency</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="bg-light py-5">
+    <div class="container text-center">
+        <h2 class="mb-4">Ready to Get Started?</h2>
+        <p class="lead mb-4">Join thousands of candidates who have successfully prepared using our platform.</p>
+        {% if not session.user_id %}
+        <div class="d-flex gap-3 justify-content-center">
+            <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-user-plus me-2"></i>Create Free Account
+            </a>
+            <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-lg">
+                <i class="fas fa-sign-in-alt me-2"></i>Login
+            </a>
+        </div>
+        {% else %}
+        <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg">
+            <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function showComingSoon(feature) {
+    if (typeof showMessage === 'function') {
+        showMessage(`${feature} features are coming soon! Stay tuned for updates.`, 'info');
+    } else {
+        alert(`${feature} features are coming soon! Stay tuned for updates.`);
+    }
+}
+</script>
+{% endblock %} 

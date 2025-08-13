@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Page Not Found - Web-Inter-Prep{% endblock %}
+
+{% block extra_css %}
+<style>
+    .error-container {
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .error-content {
+        text-align: center;
+        max-width: 600px;
+    }
+    
+    .error-code {
+        font-size: 8rem;
+        font-weight: bold;
+        color: #007bff;
+        line-height: 1;
+        margin-bottom: 1rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .error-message {
+        font-size: 1.5rem;
+        color: #6c757d;
+        margin-bottom: 2rem;
+    }
+    
+    .error-icon {
+        font-size: 4rem;
+        color: #007bff;
+        margin-bottom: 2rem;
+        animation: bounce 2s infinite;
+    }
+    
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% {
+            transform: translateY(0);
+        }
+        40% {
+            transform: translateY(-10px);
+        }
+        60% {
+            transform: translateY(-5px);
+        }
+    }
+    
+    .suggestion-card {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border-left: 4px solid #007bff;
+    }
+    
+    .back-button {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        border: none;
+        padding: 1rem 2rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: transform 0.2s ease;
+    }
+    
+    .back-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="error-container">
+    <div class="error-content">
+        <div class="error-icon">
+            <i class="fas fa-search"></i>
+        </div>
+        
+        <div class="error-code">404</div>
+        
+        <h2 class="error-message">Oops! Page Not Found</h2>
+        
+        <p class="lead text-muted mb-4">
+            The page you're looking for seems to have vanished into the digital void. 
+            Don't worry, even the best developers hit 404s sometimes!
+        </p>
+        
+        <div class="suggestion-card">
+            <h5><i class="fas fa-lightbulb text-warning me-2"></i>What can you do?</h5>
+            <ul class="list-unstyled mb-0">
+                <li><i class="fas fa-arrow-right text-primary me-2"></i>Check the URL for typos</li>
+                <li><i class="fas fa-arrow-right text-primary me-2"></i>Go back to the previous page</li>
+                <li><i class="fas fa-arrow-right text-primary me-2"></i>Start fresh from our homepage</li>
+                <li><i class="fas fa-arrow-right text-primary me-2"></i>Continue your interview prep journey</li>
+            </ul>
+        </div>
+        
+        <div class="d-flex flex-wrap justify-content-center gap-3">
+            <button onclick="history.back()" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Go Back
+            </button>
+            
+            <a href="{{ url_for('home') }}" class="btn back-button text-white">
+                <i class="fas fa-home me-2"></i>Homepage
+            </a>
+            
+            {% if session.user_id %}
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary">
+                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+            </a>
+            {% endif %}
+        </div>
+        
+        <div class="mt-4">
+            <p class="text-muted">
+                <small>
+                    <i class="fas fa-question-circle me-1"></i>
+                    Still having trouble? The page might be under construction or temporarily unavailable.
+                </small>
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Fun fact section -->
+<div class="container mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-0 bg-light">
+                <div class="card-body text-center">
+                    <h6 class="text-primary mb-3">
+                        <i class="fas fa-graduation-cap me-2"></i>Did You Know?
+                    </h6>
+                    <p class="mb-0 text-muted">
+                        HTTP 404 errors are so common that they've become a part of internet culture. 
+                        Many websites use creative 404 pages as an opportunity to showcase their personality 
+                        and help users navigate back to useful content!
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Add some interactive elements to make the 404 page more engaging
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate the error code on load
+    const errorCode = document.querySelector('.error-code');
+    if (errorCode) {
+        errorCode.style.opacity = '0';
+        errorCode.style.transform = 'scale(0.5)';
+        
+        setTimeout(() => {
+            errorCode.style.transition = 'all 0.5s ease';
+            errorCode.style.opacity = '1';
+            errorCode.style.transform = 'scale(1)';
+        }, 200);
+    }
+    
+    // Add hover effect to suggestion items
+    const suggestions = document.querySelectorAll('.suggestion-card li');
+    suggestions.forEach(item => {
+        item.style.cursor = 'default';
+        item.addEventListener('mouseenter', function() {
+            this.style.color = '#007bff';
+            this.style.transition = 'color 0.2s ease';
+        });
+        
+        item.addEventListener('mouseleave', function() {
+            this.style.color = '';
+        });
+    });
+});
+
+// Track 404 errors (you could send this to analytics)
+console.log('404 Error - Page not found:', window.location.href);
+</script>
+{% endblock %}

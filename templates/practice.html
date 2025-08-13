@@ -1,0 +1,517 @@
+{% extends "base.html" %}
+
+{% block title %}DSA Practice - Web-Inter-Prep{% endblock %}
+
+{% block content %}
+<!-- Header Section -->
+<div class="hero-section bg-gradient-primary text-white py-5">
+    <div class="container text-center">
+        <h1 class="display-4 fw-bold mb-4">
+            <i class="fas fa-code me-3"></i>Data Structures & Algorithms
+        </h1>
+        <p class="lead mb-4">
+            Practice essential DSA problems to prepare for technical interviews
+        </p>
+    </div>
+                </div>
+
+<div class="container py-5">
+    <!-- Category Selection Section -->
+    <div id="categorySection">
+        <div class="row justify-content-center">
+            <div class="col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm category-card" data-category="problem-solving">
+                    <div class="card-body text-center">
+                        <i class="fas fa-puzzle-piece text-primary display-4 mb-3"></i>
+                        <h4 class="card-title">Problem Solving</h4>
+                        <p class="card-text text-muted">General algorithmic challenges</p>
+                        <button class="btn btn-primary">
+                            <i class="fas fa-chevron-right me-2"></i>Explore
+                            </button>
+                    </div>
+                </div>
+                </div>
+
+            <div class="col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm category-card" data-category="data-structures">
+                    <div class="card-body text-center">
+                        <i class="fas fa-project-diagram text-primary display-4 mb-3"></i>
+                        <h4 class="card-title">Data Structures</h4>
+                        <p class="card-text text-muted">Arrays, LinkedLists, Trees, Graphs</p>
+                        <button class="btn btn-primary">
+                            <i class="fas fa-chevron-right me-2"></i>Explore
+                        </button>
+                    </div>
+                    </div>
+                </div>
+
+            <div class="col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm category-card" data-category="algorithms">
+                    <div class="card-body text-center">
+                        <i class="fas fa-cogs text-primary display-4 mb-3"></i>
+                        <h4 class="card-title">Algorithms</h4>
+                        <p class="card-text text-muted">Sorting, Searching, Dynamic Programming</p>
+                        <button class="btn btn-primary">
+                            <i class="fas fa-chevron-right me-2"></i>Explore
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Practice Questions Section (Hidden initially) -->
+        <div class="text-center mt-5">
+            <div class="practice-placeholder">
+                <i class="fas fa-arrow-up display-4 text-muted mb-3"></i>
+                <p class="text-muted">Select a category to view practice questions</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Questions Section (Hidden initially) -->
+    <div id="questionsSection" style="display: none;">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="mb-0">
+                <i class="fas fa-code me-2"></i>Practice Questions
+            </h3>
+            <div class="dropdown">
+                <button class="btn btn-outline-primary dropdown-toggle" type="button" id="difficultyDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    All Difficulties
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="difficultyDropdown">
+                    <li><a class="dropdown-item" href="#" data-difficulty="all">All Difficulties</a></li>
+                    <li><a class="dropdown-item" href="#" data-difficulty="easy">Easy</a></li>
+                    <li><a class="dropdown-item" href="#" data-difficulty="medium">Medium</a></li>
+                    <li><a class="dropdown-item" href="#" data-difficulty="hard">Hard</a></li>
+                </ul>
+                        </div>
+                    </div>
+        
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <div id="questionsList">
+                    <!-- Questions will be populated here -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Back to Categories Button -->
+        <div class="text-center mt-4">
+            <button class="btn btn-outline-secondary" id="backToCategories">
+                <i class="fas fa-arrow-left me-2"></i>Back to Categories
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Question Template (Hidden) -->
+<template id="questionTemplate">
+    <div class="question-item p-4 border-bottom">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <h5 class="question-title mb-0"></h5>
+            <span class="badge difficulty-badge"></span>
+        </div>
+        <p class="question-description text-muted mb-3"></p>
+        <div class="d-flex gap-2">
+            <a href="#" class="btn btn-primary btn-sm leetcode-link" target="_blank">
+                <i class="fas fa-external-link-alt me-2"></i>View on LeetCode
+            </a>
+            <button class="btn btn-outline-primary btn-sm hint-btn">
+                <i class="fas fa-lightbulb me-2"></i>Hint
+            </button>
+            <button class="btn btn-success btn-sm solution-btn">
+                <i class="fas fa-code me-2"></i>View Solution
+            </button>
+        </div>
+        <!-- Solution Section (Hidden initially) -->
+        <div class="solution-section mt-3" style="display: none;">
+            <div class="card border-success">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0"><i class="fas fa-code me-2"></i>Solution</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Approach:</strong>
+                        <p class="solution-approach mb-2"></p>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Time Complexity:</strong>
+                            <span class="solution-time-complexity"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Space Complexity:</strong>
+                            <span class="solution-space-complexity"></span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Code:</strong>
+                        <pre class="solution-code bg-light p-3 rounded mt-2"><code></code></pre>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Explanation:</strong>
+                        <p class="solution-explanation"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<style>
+.category-card {
+    transition: all 0.3s ease-in-out;
+    cursor: pointer;
+}
+
+.category-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.practice-placeholder {
+    opacity: 0.6;
+}
+
+.question-item:last-child {
+    border-bottom: none !important;
+}
+
+.difficulty-badge.easy {
+    background-color: #28a745;
+}
+
+.difficulty-badge.medium {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.difficulty-badge.hard {
+    background-color: #dc3545;
+}
+
+.leetcode-link:hover {
+    text-decoration: none;
+}
+
+.solution-section {
+    animation: slideDown 0.3s ease-out;
+}
+
+.solution-code {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    overflow-x: auto;
+}
+
+.solution-code code {
+    color: #333;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>
+
+<script>
+// DSA Questions Data
+const dsaQuestions = {
+    'problem-solving': [
+        {
+            title: 'Two Sum',
+            description: 'Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.',
+            difficulty: 'easy',
+            leetcodeUrl: 'https://leetcode.com/problems/two-sum/',
+            solution: {
+                approach: 'Use a hash map to store complements. For each number, check if its complement (target - num) exists in the map.',
+                timeComplexity: 'O(n)',
+                spaceComplexity: 'O(n)',
+                code: `function twoSum(nums, target) {
+    const map = new Map();
+    
+    for (let i = 0; i < nums.length; i++) {
+        const complement = target - nums[i];
+        
+        if (map.has(complement)) {
+            return [map.get(complement), i];
+        }
+        
+        map.set(nums[i], i);
+    }
+    
+    return [];
+}`,
+                explanation: 'We iterate through the array once, storing each number and its index in a hash map. For each number, we check if its complement (target - current number) already exists in the map. If found, we return the current index and the stored complement index.'
+            }
+        },
+        {
+            title: 'Valid Parentheses',
+            description: 'Given a string s containing just the characters \'(\', \')\', \'{\', \'}\', \'[\' and \']\', determine if the input string is valid.',
+            difficulty: 'easy',
+            leetcodeUrl: 'https://leetcode.com/problems/valid-parentheses/',
+            solution: {
+                approach: 'Use a stack to keep track of opening brackets. For each closing bracket, check if it matches the most recent opening bracket.',
+                timeComplexity: 'O(n)',
+                spaceComplexity: 'O(n)',
+                code: `function isValid(s) {
+    const stack = [];
+    const brackets = {
+        ')': '(',
+        '}': '{',
+        ']': '['
+    };
+    
+    for (let char of s) {
+        if (char in brackets) {
+            if (stack.pop() !== brackets[char]) {
+                return false;
+            }
+        } else {
+            stack.push(char);
+        }
+    }
+    
+    return stack.length === 0;
+}`,
+                explanation: 'We use a stack to keep track of opening brackets. When we encounter a closing bracket, we check if it matches the most recent opening bracket (top of stack). If they don\'t match or if the stack is empty, the string is invalid.'
+            }
+        },
+        {
+            title: 'Merge Intervals',
+            description: 'Given an array of intervals where intervals[i] = [starti, endi], merge all overlapping intervals.',
+            difficulty: 'medium',
+            leetcodeUrl: 'https://leetcode.com/problems/merge-intervals/'
+        }
+    ],
+    'data-structures': [
+        {
+            title: 'Reverse Linked List',
+            description: 'Given the head of a singly linked list, reverse the list, and return the reversed list.',
+            difficulty: 'easy',
+            leetcodeUrl: 'https://leetcode.com/problems/reverse-linked-list/'
+        },
+        {
+            title: 'Maximum Depth of Binary Tree',
+            description: 'Given the root of a binary tree, return its maximum depth.',
+            difficulty: 'easy',
+            leetcodeUrl: 'https://leetcode.com/problems/maximum-depth-of-binary-tree/'
+        },
+        {
+            title: 'LRU Cache',
+            description: 'Design a data structure that follows the constraints of a Least Recently Used (LRU) cache.',
+            difficulty: 'medium',
+            leetcodeUrl: 'https://leetcode.com/problems/lru-cache/'
+        }
+    ],
+    'algorithms': [
+        {
+            title: 'Binary Search',
+            description: 'Given an array of integers nums which is sorted in ascending order, and an integer target, write a function to search target in nums.',
+            difficulty: 'easy',
+            leetcodeUrl: 'https://leetcode.com/problems/binary-search/',
+            solution: {
+                approach: 'Use binary search by comparing target with middle element and eliminating half of the search space in each iteration.',
+                timeComplexity: 'O(log n)',
+                spaceComplexity: 'O(1)',
+                code: `function search(nums, target) {
+    let left = 0;
+    let right = nums.length - 1;
+    
+    while (left <= right) {
+        const mid = Math.floor((left + right) / 2);
+        
+        if (nums[mid] === target) {
+            return mid;
+        } else if (nums[mid] < target) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    
+    return -1;
+}`,
+                explanation: 'Binary search works by repeatedly dividing the search space in half. We compare the target with the middle element and eliminate the half that cannot contain the target. This gives us O(log n) time complexity.'
+            }
+        },
+        {
+            title: 'Merge Sort',
+            description: 'Implement the merge sort algorithm to sort an array of integers.',
+            difficulty: 'medium',
+            leetcodeUrl: 'https://leetcode.com/problems/sort-an-array/'
+        },
+        {
+            title: 'Dijkstra\'s Algorithm',
+            description: 'Implement Dijkstra\'s algorithm to find the shortest path from a source node to all other nodes in a weighted graph.',
+            difficulty: 'hard',
+            leetcodeUrl: 'https://leetcode.com/problems/network-delay-time/'
+        }
+    ]
+};
+
+let currentCategory = '';
+let currentDifficulty = 'all';
+
+// Initialize the page
+document.addEventListener('DOMContentLoaded', function() {
+    initializeDSA();
+});
+
+function initializeDSA() {
+    // Category card click handlers
+    document.querySelectorAll('.category-card').forEach(card => {
+        card.addEventListener('click', function() {
+            const category = this.dataset.category;
+            showQuestions(category);
+        });
+    });
+    
+    // Difficulty filter handlers
+    document.querySelectorAll('[data-difficulty]').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            currentDifficulty = this.dataset.difficulty;
+            document.getElementById('difficultyDropdown').textContent = this.textContent;
+            filterQuestions();
+        });
+    });
+    
+    // Back to categories button
+    document.getElementById('backToCategories').addEventListener('click', showCategories);
+}
+
+function showQuestions(category) {
+    currentCategory = category;
+    
+    // Hide category section and show questions section
+    document.getElementById('categorySection').style.display = 'none';
+    document.getElementById('questionsSection').style.display = 'block';
+    
+    // Update page title
+    const categoryNames = {
+        'problem-solving': 'Problem Solving',
+        'data-structures': 'Data Structures',
+        'algorithms': 'Algorithms'
+    };
+    
+    document.querySelector('#questionsSection h3').innerHTML = 
+        `<i class="fas fa-code me-2"></i>${categoryNames[category]} Practice Questions`;
+    
+    // Load and display questions
+    loadQuestions(category);
+}
+
+function showCategories() {
+    document.getElementById('categorySection').style.display = 'block';
+    document.getElementById('questionsSection').style.display = 'none';
+    currentCategory = '';
+    currentDifficulty = 'all';
+    document.getElementById('difficultyDropdown').textContent = 'All Difficulties';
+}
+
+function loadQuestions(category) {
+    const questions = dsaQuestions[category] || [];
+    const questionsList = document.getElementById('questionsList');
+    const template = document.getElementById('questionTemplate');
+    
+    questionsList.innerHTML = '';
+    
+    questions.forEach(question => {
+        const questionElement = template.content.cloneNode(true);
+        
+        // Set question data
+        questionElement.querySelector('.question-title').textContent = question.title;
+        questionElement.querySelector('.question-description').textContent = question.description;
+        questionElement.querySelector('.leetcode-link').href = question.leetcodeUrl;
+        
+        // Set difficulty badge
+        const badge = questionElement.querySelector('.difficulty-badge');
+        badge.textContent = question.difficulty.toUpperCase();
+        badge.classList.add(question.difficulty);
+        
+        // Add hint functionality
+        questionElement.querySelector('.hint-btn').addEventListener('click', function() {
+            showHint(question.title);
+        });
+        
+        // Add solution functionality
+        if (question.solution) {
+            const solutionBtn = questionElement.querySelector('.solution-btn');
+            const solutionSection = questionElement.querySelector('.solution-section');
+            
+            solutionBtn.addEventListener('click', function() {
+                if (solutionSection.style.display === 'none') {
+                    // Show solution
+                    solutionSection.style.display = 'block';
+                    solutionBtn.innerHTML = '<i class="fas fa-eye-slash me-2"></i>Hide Solution';
+                    solutionBtn.classList.remove('btn-success');
+                    solutionBtn.classList.add('btn-secondary');
+                    
+                    // Populate solution data
+                    solutionSection.querySelector('.solution-approach').textContent = question.solution.approach;
+                    solutionSection.querySelector('.solution-time-complexity').textContent = question.solution.timeComplexity;
+                    solutionSection.querySelector('.solution-space-complexity').textContent = question.solution.spaceComplexity;
+                    solutionSection.querySelector('.solution-code code').textContent = question.solution.code;
+                    solutionSection.querySelector('.solution-explanation').textContent = question.solution.explanation;
+                } else {
+                    // Hide solution
+                    solutionSection.style.display = 'none';
+                    solutionBtn.innerHTML = '<i class="fas fa-code me-2"></i>View Solution';
+                    solutionBtn.classList.remove('btn-secondary');
+                    solutionBtn.classList.add('btn-success');
+                }
+            });
+        } else {
+            // Hide solution button if no solution available
+            questionElement.querySelector('.solution-btn').style.display = 'none';
+        }
+        
+        questionsList.appendChild(questionElement);
+    });
+    
+    // Apply current difficulty filter
+    filterQuestions();
+}
+
+function filterQuestions() {
+    const questions = document.querySelectorAll('.question-item');
+    
+    questions.forEach(question => {
+        const difficulty = question.querySelector('.difficulty-badge').classList[1]; // easy, medium, or hard
+        
+        if (currentDifficulty === 'all' || difficulty === currentDifficulty) {
+            question.style.display = 'block';
+        } else {
+            question.style.display = 'none';
+        }
+    });
+}
+
+function showHint(questionTitle) {
+    const hints = {
+        'Two Sum': 'Try using a hash map to store numbers you\'ve seen and their indices.',
+        'Valid Parentheses': 'Use a stack to keep track of opening brackets.',
+        'Merge Intervals': 'Sort the intervals first, then merge overlapping ones.',
+        'Reverse Linked List': 'Use three pointers: previous, current, and next.',
+        'Maximum Depth of Binary Tree': 'Use recursion to find the maximum depth of left and right subtrees.',
+        'LRU Cache': 'Use a combination of HashMap and Doubly Linked List.',
+        'Binary Search': 'Remember to handle edge cases and update left/right pointers correctly.',
+        'Merge Sort': 'Divide the array into two halves, sort them recursively, then merge.',
+        'Dijkstra\'s Algorithm': 'Use a priority queue (min-heap) to always process the node with minimum distance.'
+    };
+    
+    const hint = hints[questionTitle] || 'Think about the problem step by step. What data structure would be most efficient?';
+    
+    // Show hint in a modal or alert (you can enhance this)
+    alert(`Hint for ${questionTitle}:\n\n${hint}`);
+}
+</script>
+{% endblock %}

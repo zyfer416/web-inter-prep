@@ -1,0 +1,413 @@
+{% extends "base.html" %}
+
+{% block title %}Feedback & Review - Web-Inter-Prep{% endblock %}
+
+{% block extra_css %}
+<style>
+    .feedback-header {
+        background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+    }
+    
+    .attempt-card {
+        margin-bottom: 1.5rem;
+        border: none;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease;
+    }
+    
+    .attempt-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    .correct-answer {
+        border-left: 4px solid #28a745;
+        background-color: #f8fff9;
+    }
+    
+    .incorrect-answer {
+        border-left: 4px solid #dc3545;
+        background-color: #fff8f8;
+    }
+    
+    .user-answer-section {
+        background-color: #f8f9fa;
+        border-radius: 6px;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+    
+    .model-answer-section {
+        background-color: #e7f3ff;
+        border-radius: 6px;
+        padding: 1rem;
+        margin: 1rem 0;
+        border-left: 4px solid #007bff;
+    }
+    
+    .tips-section {
+        background-color: #fff3cd;
+        border-radius: 6px;
+        padding: 1rem;
+        margin: 1rem 0;
+        border-left: 4px solid #ffc107;
+    }
+    
+    .timestamp {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    .filter-buttons {
+        margin-bottom: 2rem;
+    }
+    
+    .expand-btn {
+        border: none;
+        background: none;
+        color: #007bff;
+        font-size: 0.9rem;
+    }
+    
+    .expand-btn:hover {
+        text-decoration: underline;
+    }
+    
+    .collapsible-content {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+    }
+    
+    .collapsible-content.expanded {
+        max-height: 1000px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="feedback-header">
+    <div class="container">
+        <h1><i class="fas fa-chart-line me-2"></i>Feedback & Review</h1>
+        <p class="mb-0">Review your past answers and learn from detailed feedback</p>
+    </div>
+</div>
+
+<div class="container">
+    {% if feedback_data %}
+    <!-- Filter Buttons -->
+    <div class="filter-buttons">
+        <div class="btn-group" role="group">
+            <input type="radio" class="btn-check" name="filter" id="all" autocomplete="off" checked>
+            <label class="btn btn-outline-primary" for="all">All Attempts</label>
+
+            <input type="radio" class="btn-check" name="filter" id="correct" autocomplete="off">
+            <label class="btn btn-outline-success" for="correct">Correct Only</label>
+
+            <input type="radio" class="btn-check" name="filter" id="incorrect" autocomplete="off">
+            <label class="btn btn-outline-danger" for="incorrect">Incorrect Only</label>
+        </div>
+        
+        <div class="btn-group ms-3" role="group">
+            <input type="radio" class="btn-check" name="type-filter" id="all-types" autocomplete="off" checked>
+            <label class="btn btn-outline-secondary" for="all-types">All Types</label>
+
+            <input type="radio" class="btn-check" name="type-filter" id="technical" autocomplete="off">
+            <label class="btn btn-outline-info" for="technical">Technical</label>
+
+            <input type="radio" class="btn-check" name="type-filter" id="behavioral" autocomplete="off">
+            <label class="btn btn-outline-warning" for="behavioral">Behavioral</label>
+        </div>
+    </div>
+
+    <!-- Feedback Cards -->
+    <div id="feedback-container">
+        {% for item in feedback_data %}
+        <div class="card attempt-card {{ 'correct-answer' if item.correct else 'incorrect-answer' }}" 
+             data-correct="{{ item.correct|lower }}" data-type="{{ item.question.type }}">
+            <div class="card-body">
+                <!-- Question Header -->
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-{{ 'primary' if item.question.type == 'technical' else 'success' }} fs-6">
+                            <i class="fas fa-{{ 'code' if item.question.type == 'technical' else 'comments' }} me-1"></i>
+                            {{ item.question.type.title() }}
+                        </span>
+                        <span class="badge bg-{{ 'success' if item.question.difficulty == 'easy' else 'warning' if item.question.difficulty == 'medium' else 'danger' }} fs-6">
+                            {{ item.question.difficulty.title() }}
+                        </span>
+                        <span class="badge bg-{{ 'success' if item.correct else 'danger' }} fs-6">
+                            <i class="fas fa-{{ 'check' if item.correct else 'times' }} me-1"></i>
+                            {{ 'Correct' if item.correct else 'Incorrect' }}
+                        </span>
+                    </div>
+                    <small class="timestamp">
+                        <i class="fas fa-clock me-1"></i>{{ item.timestamp }}
+                    </small>
+                </div>
+
+                <!-- Question Text -->
+                <h5 class="mb-3">{{ item.question.question }}</h5>
+
+                <!-- Tags -->
+                {% if item.question.tags %}
+                <div class="mb-3">
+                    <small class="text-muted">Topics: </small>
+                    {% for tag in item.question.tags %}
+                    <span class="badge bg-light text-dark me-1">{{ tag }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Your Answer -->
+                {% if item.user_answer %}
+                <div class="user-answer-section">
+                    <h6><i class="fas fa-user me-2"></i>Your Answer:</h6>
+                    <div class="user-answer-content">
+                        {% if item.user_answer|length > 200 %}
+                        <div class="collapsible-content" id="user-answer-{{ item.attempt_id }}">
+                            <p class="mb-0">{{ item.user_answer }}</p>
+                        </div>
+                        <button class="expand-btn" onclick="toggleContent('user-answer-{{ item.attempt_id }}', this)">
+                            <i class="fas fa-chevron-down me-1"></i>Show full answer
+                        </button>
+                        {% else %}
+                        <p class="mb-0">{{ item.user_answer }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="user-answer-section">
+                    <h6><i class="fas fa-user me-2"></i>Your Answer:</h6>
+                    <p class="text-muted mb-0"><em>No answer provided</em></p>
+                </div>
+                {% endif %}
+
+                <!-- Model Answer -->
+                <div class="model-answer-section">
+                    <h6><i class="fas fa-lightbulb me-2"></i>Model Answer:</h6>
+                    <div class="model-answer-content">
+                        {% if item.question.answer|length > 300 %}
+                        <div class="collapsible-content" id="model-answer-{{ item.attempt_id }}">
+                            <pre style="white-space: pre-wrap; font-family: inherit;">{{ item.question.answer }}</pre>
+                        </div>
+                        <button class="expand-btn" onclick="toggleContent('model-answer-{{ item.attempt_id }}', this)">
+                            <i class="fas fa-chevron-down me-1"></i>Show full answer
+                        </button>
+                        {% else %}
+                        <pre style="white-space: pre-wrap; font-family: inherit;">{{ item.question.answer }}</pre>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Tips and Hints -->
+                {% if item.question.hints %}
+                <div class="tips-section">
+                    <h6><i class="fas fa-tips me-2"></i>Hints & Tips:</h6>
+                    <p class="mb-0">{{ item.question.hints }}</p>
+                </div>
+                {% endif %}
+
+                <!-- Personalized Feedback -->
+                <div class="mt-3">
+                    <h6><i class="fas fa-comment-dots me-2"></i>Feedback:</h6>
+                    {% if item.correct %}
+                    <div class="alert alert-success mb-0">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>Well done!</strong> Your answer demonstrates good understanding of the concept. 
+                        {% if item.question.type == 'technical' %}
+                        Continue practicing similar problems to reinforce your knowledge.
+                        {% else %}
+                        Your response shows good use of the STAR method and relevant examples.
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Room for improvement.</strong> 
+                        {% if not item.user_answer %}
+                        Consider taking more time to think through your answer before responding.
+                        {% else %}
+                        Review the model answer and try to identify key concepts you may have missed.
+                        {% endif %}
+                        {% if item.question.type == 'technical' %}
+                        Focus on understanding the underlying algorithms and data structures.
+                        {% else %}
+                        Practice structuring your answers using the STAR method (Situation, Task, Action, Result).
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="mt-3 text-end">
+                    <button class="btn btn-outline-primary btn-sm me-2" onclick="copyAnswer('{{ item.question.answer|replace("'", "\\'") }}')">
+                        <i class="fas fa-copy me-1"></i>Copy Model Answer
+                    </button>
+                    <a href="{{ url_for('practice') }}?similar={{ item.question.id }}" class="btn btn-outline-success btn-sm">
+                        <i class="fas fa-repeat me-1"></i>Practice Similar
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- No Results Message -->
+    <div id="no-results" class="text-center py-5" style="display: none;">
+        <i class="fas fa-search text-muted display-4 mb-3"></i>
+        <h4>No matching attempts found</h4>
+        <p class="text-muted">Try adjusting your filters or start practicing to see feedback here.</p>
+        <a href="{{ url_for('practice') }}" class="btn btn-primary">
+            <i class="fas fa-play me-2"></i>Start Practice
+        </a>
+    </div>
+
+    {% else %}
+    <!-- Empty State -->
+    <div class="text-center py-5">
+        <i class="fas fa-chart-line text-muted display-1 mb-4"></i>
+        <h2>No Feedback Available Yet</h2>
+        <p class="lead text-muted">Start practicing questions to see detailed feedback and track your progress!</p>
+        <div class="mt-4">
+            <a href="{{ url_for('practice') }}" class="btn btn-primary btn-lg me-3">
+                <i class="fas fa-play me-2"></i>Start Practice
+            </a>
+            <a href="{{ url_for('mock_interview') }}" class="btn btn-outline-primary btn-lg">
+                <i class="fas fa-stopwatch me-2"></i>Take Mock Interview
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Filter functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const filterInputs = document.querySelectorAll('input[name="filter"], input[name="type-filter"]');
+    filterInputs.forEach(input => {
+        input.addEventListener('change', filterAttempts);
+    });
+});
+
+function filterAttempts() {
+    const correctFilter = document.querySelector('input[name="filter"]:checked').id;
+    const typeFilter = document.querySelector('input[name="type-filter"]:checked').id;
+    
+    const attempts = document.querySelectorAll('.attempt-card');
+    let visibleCount = 0;
+    
+    attempts.forEach(attempt => {
+        let show = true;
+        
+        // Filter by correctness
+        if (correctFilter === 'correct' && attempt.dataset.correct !== 'true') {
+            show = false;
+        } else if (correctFilter === 'incorrect' && attempt.dataset.correct !== 'false') {
+            show = false;
+        }
+        
+        // Filter by type
+        if (typeFilter !== 'all-types' && attempt.dataset.type !== typeFilter) {
+            show = false;
+        }
+        
+        if (show) {
+            attempt.style.display = 'block';
+            visibleCount++;
+        } else {
+            attempt.style.display = 'none';
+        }
+    });
+    
+    // Show/hide no results message
+    const noResults = document.getElementById('no-results');
+    if (visibleCount === 0) {
+        noResults.style.display = 'block';
+    } else {
+        noResults.style.display = 'none';
+    }
+}
+
+// Toggle collapsible content
+function toggleContent(elementId, button) {
+    const content = document.getElementById(elementId);
+    const icon = button.querySelector('i');
+    
+    if (content.classList.contains('expanded')) {
+        content.classList.remove('expanded');
+        icon.className = 'fas fa-chevron-down me-1';
+        button.innerHTML = '<i class="fas fa-chevron-down me-1"></i>Show full answer';
+    } else {
+        content.classList.add('expanded');
+        icon.className = 'fas fa-chevron-up me-1';
+        button.innerHTML = '<i class="fas fa-chevron-up me-1"></i>Show less';
+    }
+}
+
+// Copy answer to clipboard
+function copyAnswer(answer) {
+    // Clean up the answer text
+    const cleanAnswer = answer.replace(/\\'/g, "'").replace(/\\n/g, '\n');
+    
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(cleanAnswer).then(function() {
+            showMessage('Model answer copied to clipboard!', 'success');
+        }).catch(function(err) {
+            console.error('Could not copy text: ', err);
+            showMessage('Failed to copy to clipboard', 'error');
+        });
+    } else {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = cleanAnswer;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            showMessage('Model answer copied to clipboard!', 'success');
+        } catch (err) {
+            showMessage('Failed to copy to clipboard', 'error');
+        }
+        document.body.removeChild(textArea);
+    }
+}
+
+// Enhanced message display
+function showMessage(message, type = 'info') {
+    // Remove existing messages
+    const existingMessages = document.querySelectorAll('.floating-message');
+    existingMessages.forEach(msg => msg.remove());
+    
+    const alertClass = type === 'error' ? 'danger' : type;
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `alert alert-${alertClass} floating-message`;
+    messageDiv.style.cssText = `
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    `;
+    messageDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+    `;
+    
+    document.body.appendChild(messageDiv);
+    
+    // Auto-dismiss after 3 seconds
+    setTimeout(() => {
+        if (messageDiv.parentNode) {
+            messageDiv.remove();
+        }
+    }, 3000);
+}
+</script>
+{% endblock %}

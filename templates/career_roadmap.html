@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+
+{% block title %}Career Roadmap Generator - Web-Inter-Prep{% endblock %}
+
+{% block content %}
+<div class="hero-section bg-gradient-primary text-white py-5">
+    <div class="container text-center">
+        <h1 class="display-4 fw-bold mb-4">Career Roadmap Generator</h1>
+        <p class="lead mb-4">
+            Generate a personalized career roadmap based on your role, experience, and target company using AI.
+        </p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-route text-primary display-4 mb-3"></i>
+                        <h3 class="card-title">Career Roadmap Generator</h3>
+                        <p class="text-muted">Generate a personalized career roadmap based on your role, experience, and target company using AI.</p>
+                    </div>
+                    
+                    <form id="roadmapForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="jobRole" class="form-label fw-bold">Job Role</label>
+                                <select class="form-select" id="jobRole" required>
+                                    <option value="">Select job role</option>
+                                    <option value="software-engineer">Software Engineer</option>
+                                    <option value="frontend-developer">Frontend Developer</option>
+                                    <option value="backend-developer">Backend Developer</option>
+                                    <option value="full-stack-developer">Full Stack Developer</option>
+                                    <option value="devops-engineer">DevOps Engineer</option>
+                                    <option value="data-scientist">Data Scientist</option>
+                                    <option value="machine-learning-engineer">Machine Learning Engineer</option>
+                                    <option value="qa-engineer">QA Engineer</option>
+                                    <option value="product-manager">Product Manager</option>
+                                    <option value="ux-ui-designer">UX/UI Designer</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="experience" class="form-label fw-bold">Years of Experience</label>
+                                <select class="form-select" id="experience" required>
+                                    <option value="">Select your experience</option>
+                                    <option value="0-1">0-1 years</option>
+                                    <option value="1-3">1-3 years</option>
+                                    <option value="3-5">3-5 years</option>
+                                    <option value="5-8">5-8 years</option>
+                                    <option value="8+">8+ years</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="targetCompany" class="form-label fw-bold">Target Company</label>
+                                <select class="form-select" id="targetCompany" required>
+                                    <option value="any">Any (General)</option>
+                                    <option value="google">Google</option>
+                                    <option value="microsoft">Microsoft</option>
+                                    <option value="amazon">Amazon</option>
+                                    <option value="apple">Apple</option>
+                                    <option value="meta">Meta</option>
+                                    <option value="netflix">Netflix</option>
+                                    <option value="ibm">IBM</option>
+                                    <option value="oracle">Oracle</option>
+                                    <option value="salesforce">Salesforce</option>
+                                    <option value="adobe">Adobe</option>
+                                    <option value="other">Other Specific Company</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="skills" class="form-label fw-bold">Key Skills (comma-separated)</label>
+                                <input type="text" class="form-control" id="skills" placeholder="e.g., Python, React, SQL, AWS" required>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg px-5">
+                                <i class="fas fa-magic me-2"></i>Generate Roadmap
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <!-- Roadmap Output Section (Hidden by default) -->
+                    <div id="roadmapOutput" class="mt-5" style="display: none;">
+                        <hr class="my-4">
+                        <h4 class="text-center mb-4">Your Personalized Career Roadmap</h4>
+                        
+                        <div id="roadmapStages">
+                            <!-- Roadmap content will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('roadmapForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    generateRoadmap();
+});
+
+function generateRoadmap() {
+    const jobRole = document.getElementById('jobRole').value;
+    const experience = document.getElementById('experience').value;
+    const targetCompany = document.getElementById('targetCompany').value;
+    const skills = document.getElementById('skills').value;
+    
+    if (!jobRole || !experience || !targetCompany || !skills) {
+        alert('Please fill in all fields');
+        return;
+    }
+    
+    // Show loading state
+    const submitBtn = document.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating...';
+    submitBtn.disabled = true;
+    
+    // Simulate AI processing time
+    setTimeout(() => {
+        displayRoadmap(jobRole, experience, targetCompany, skills);
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }, 2000);
+}
+
+function displayRoadmap(jobRole, experience, targetCompany, skills) {
+    const roadmapOutput = document.getElementById('roadmapOutput');
+    const roadmapStages = document.getElementById('roadmapStages');
+    
+    // Generate roadmap based on inputs
+    const roadmap = generateRoadmapContent(jobRole, experience, targetCompany, skills);
+    
+    roadmapStages.innerHTML = roadmap;
+    roadmapOutput.style.display = 'block';
+    
+    // Smooth scroll to output
+    roadmapOutput.scrollIntoView({ behavior: 'smooth' });
+}
+
+function generateRoadmapContent(jobRole, experience, targetCompany, skills) {
+    const roleDisplay = document.getElementById('jobRole').options[document.getElementById('jobRole').selectedIndex].text;
+    const companyDisplay = targetCompany === 'any' ? 'General Industry' : document.getElementById('targetCompany').options[document.getElementById('targetCompany').selectedIndex].text;
+    
+    let roadmapHTML = `
+        <div class="alert alert-info mb-4">
+            <h6 class="mb-2"><i class="fas fa-info-circle me-2"></i>Generated for: <strong>${roleDisplay}</strong> at <strong>${companyDisplay}</strong></h6>
+            <p class="mb-0">Key Skills: <strong>${skills}</strong></p>
+        </div>
+    `;
+    
+    // Stage 1: Foundational Skills
+    roadmapHTML += `
+        <div class="roadmap-stage mb-4">
+            <div class="stage-header bg-primary text-white p-3 rounded-top">
+                <h5 class="mb-0"><i class="fas fa-rocket me-2"></i>Stage 1: Foundational Skills</h5>
+                <small class="opacity-75">Estimated Duration: 0-3 Months</small>
+            </div>
+            <div class="stage-content border border-top-0 p-4 rounded-bottom">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3">Key Milestones</h6>
+                        <div class="milestone-item border border-success rounded p-3 mb-3">
+                            <h6 class="text-success mb-2"><i class="fas fa-check-circle me-2"></i>Master Core Language</h6>
+                            <ul class="mb-0">
+                                <li>Complete intro course</li>
+                                <li>Build 3 small projects</li>
+                            </ul>
+                        </div>
+                        <div class="milestone-item border border-success rounded p-3">
+                            <h6 class="text-success mb-2"><i class="fas fa-check-circle me-2"></i>Understand Data Structures</h6>
+                            <ul class="mb-0">
+                                <li>Implement common DS (Arrays, Lists, Stacks, Queues)</li>
+                                <li>Solve 20 easy DS problems</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3">Skills to Focus On</h6>
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <span class="badge bg-success">Core Programming Language</span>
+                            <span class="badge bg-info">Basic Data Structures</span>
+                            <span class="badge bg-success">Problem Solving</span>
+                        </div>
+                        <h6 class="text-primary mb-3">Recommended Resources</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-link me-2 text-primary"></i>Online Course Platform (e.g., Coursera, Udemy)</li>
+                            <li><i class="fas fa-link me-2 text-primary"></i>Practice Website (e.g., LeetCode Easy)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Stage 2: Intermediate Skills
+    roadmapHTML += `
+        <div class="roadmap-stage mb-4">
+            <div class="stage-header bg-success text-white p-3 rounded-top">
+                <h5 class="mb-0"><i class="fas fa-layer-group me-2"></i>Stage 2: Intermediate Skills</h5>
+                <small class="opacity-75">Estimated Duration: 3-6 Months</small>
+            </div>
+            <div class="stage-content border border-top-0 p-4 rounded-bottom">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-success mb-3">Key Milestones</h6>
+                        <div class="milestone-item border border-success rounded p-3 mb-3">
+                            <h6 class="text-success mb-2"><i class="fas fa-check-circle me-2"></i>Advanced Algorithms</h6>
+                            <ul class="mb-0">
+                                <li>Master sorting algorithms</li>
+                                <li>Learn graph algorithms</li>
+                            </ul>
+                        </div>
+                        <div class="milestone-item border border-success rounded p-3">
+                            <h6 class="text-success mb-2"><i class="fas fa-check-circle me-2"></i>Framework Mastery</h6>
+                            <ul class="mb-0">
+                                <li>Build 2-3 medium projects</li>
+                                <li>Learn testing frameworks</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-success mb-3">Skills to Focus On</h6>
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <span class="badge bg-success">Advanced Algorithms</span>
+                            <span class="badge bg-warning">Framework Knowledge</span>
+                            <span class="badge bg-info">Testing & Debugging</span>
+                        </div>
+                        <h6 class="text-success mb-3">Recommended Resources</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-link me-2 text-success"></i>Advanced Algorithm Courses</li>
+                            <li><i class="fas fa-link me-2 text-success"></i>Open Source Projects</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Stage 3: Advanced Skills
+    roadmapHTML += `
+        <div class="roadmap-stage mb-4">
+            <div class="stage-header bg-warning text-dark p-3 rounded-top">
+                <h5 class="mb-0"><i class="fas fa-crown me-2"></i>Stage 3: Advanced Skills</h5>
+                <small class="opacity-75">Estimated Duration: 6-12 Months</small>
+            </div>
+            <div class="stage-content border border-top-0 p-4 rounded-bottom">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-warning mb-3">Key Milestones</h6>
+                        <div class="milestone-item border border-warning rounded p-3 mb-3">
+                            <h6 class="text-warning mb-2"><i class="fas fa-star me-2"></i>System Design</h6>
+                            <ul class="mb-0">
+                                <li>Learn distributed systems</li>
+                                <li>Practice system design interviews</li>
+                            </ul>
+                        </div>
+                        <div class="milestone-item border border-warning rounded p-3">
+                            <h6 class="text-warning mb-2"><i class="fas fa-star me-2"></i>Leadership Skills</h6>
+                            <ul class="mb-0">
+                                <li>Mentor junior developers</li>
+                                <li>Lead technical discussions</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-warning mb-3">Skills to Focus On</h6>
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <span class="badge bg-warning">System Design</span>
+                            <span class="badge bg-danger">Leadership</span>
+                            <span class="badge bg-primary">Architecture</span>
+                        </div>
+                        <h6 class="text-warning mb-3">Recommended Resources</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-link me-2 text-warning"></i>System Design Courses</li>
+                            <li><i class="fas fa-link me-2 text-warning"></i>Leadership Workshops</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Final call-to-action
+    roadmapHTML += `
+        <div class="text-center mt-5">
+            <div class="alert alert-success">
+                <h5><i class="fas fa-lightbulb me-2"></i>Ready to Start Your Journey?</h5>
+                <p class="mb-3">Follow this roadmap step by step to achieve your career goals!</p>
+                <a href="/practice" class="btn btn-success me-2">
+                    <i class="fas fa-code me-2"></i>Start Practicing
+                </a>
+                <a href="/resources" class="btn btn-outline-success">
+                    <i class="fas fa-book me-2"></i>Browse Resources
+                </a>
+            </div>
+        </div>
+    `;
+    
+    return roadmapHTML;
+}
+</script>
+{% endblock %} 

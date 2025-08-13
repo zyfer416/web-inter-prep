@@ -1,0 +1,360 @@
+{% extends "base.html" %}
+
+{% block title %}Mock Interview Results - Web-Inter-Prep{% endblock %}
+
+{% block extra_css %}
+<style>
+    .results-header {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: 3rem 0;
+        margin-bottom: 2rem;
+    }
+    
+    .score-circle {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 2rem;
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: white;
+    }
+    
+    .score-excellent {
+        background: linear-gradient(135deg, #28a745, #20c997);
+    }
+    
+    .score-good {
+        background: linear-gradient(135deg, #20c997, #17a2b8);
+    }
+    
+    .score-average {
+        background: linear-gradient(135deg, #ffc107, #fd7e14);
+    }
+    
+    .score-poor {
+        background: linear-gradient(135deg, #dc3545, #e83e8c);
+    }
+    
+    .stat-card {
+        border: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .feedback-section {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 2rem;
+        margin-top: 2rem;
+    }
+    
+    .recommendation-card {
+        border-left: 4px solid #007bff;
+        background-color: white;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .progress-ring {
+        transform: rotate(-90deg);
+    }
+    
+    .celebration-animation {
+        animation: celebration 2s ease-in-out;
+    }
+    
+    @keyframes celebration {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="results-header">
+    <div class="container text-center">
+        <div class="celebration-animation">
+            <i class="fas fa-trophy display-1 mb-3"></i>
+            <h1 class="display-4 fw-bold">Interview Complete!</h1>
+            <p class="lead">Here's how you performed in your mock interview session</p>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Score Overview -->
+    <div class="row mb-5">
+        <div class="col-lg-4 text-center">
+            <div class="score-circle {{ 'score-excellent' if results.score >= 80 else 'score-good' if results.score >= 60 else 'score-average' if results.score >= 40 else 'score-poor' }}">
+                {{ results.score }}%
+            </div>
+            <h3>Overall Score</h3>
+            <p class="text-muted">
+                {% if results.score >= 80 %}
+                    Excellent performance! You're well-prepared.
+                {% elif results.score >= 60 %}
+                    Good job! Room for improvement in some areas.
+                {% elif results.score >= 40 %}
+                    Average performance. Focus on weak areas.
+                {% else %}
+                    Keep practicing! You'll improve with more preparation.
+                {% endif %}
+            </p>
+        </div>
+        
+        <div class="col-lg-8">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <div class="card stat-card text-center">
+                        <div class="card-body">
+                            <i class="fas fa-question-circle text-primary display-4 mb-2"></i>
+                            <h4>{{ results.total_questions }}</h4>
+                            <p class="text-muted mb-0">Questions Answered</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <div class="card stat-card text-center">
+                        <div class="card-body">
+                            <i class="fas fa-check-circle text-success display-4 mb-2"></i>
+                            <h4>{{ results.correct_answers }}</h4>
+                            <p class="text-muted mb-0">Correct Answers</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <div class="card stat-card text-center">
+                        <div class="card-body">
+                            <i class="fas fa-clock text-warning display-4 mb-2"></i>
+                            <h4>{{ results.duration }}</h4>
+                            <p class="text-muted mb-0">Time Taken</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <div class="card stat-card text-center">
+                        <div class="card-body">
+                            <i class="fas fa-percentage text-info display-4 mb-2"></i>
+                            <h4>{{ results.score }}%</h4>
+                            <p class="text-muted mb-0">Accuracy Rate</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Analysis -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-chart-bar text-primary me-2"></i>Performance Analysis
+                    </h5>
+                    
+                    <div class="mb-4">
+                        <h6>Accuracy Breakdown</h6>
+                        <div class="progress mb-2" style="height: 20px;">
+                            <div class="progress-bar bg-success" role="progressbar" 
+                                 style="width: {{ results.score }}%">
+                                {{ results.score }}%
+                            </div>
+                        </div>
+                        <small class="text-muted">
+                            {{ results.correct_answers }} out of {{ results.total_questions }} questions answered correctly
+                        </small>
+                    </div>
+                    
+                    <!-- Detailed Feedback -->
+                    <div class="feedback-section">
+                        <h6><i class="fas fa-lightbulb text-warning me-2"></i>Areas of Strength</h6>
+                        <ul class="list-unstyled">
+                            {% if results.score >= 80 %}
+                            <li><i class="fas fa-check text-success me-2"></i>Excellent understanding of core concepts</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Strong problem-solving approach</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Consistent performance across questions</li>
+                            {% elif results.score >= 60 %}
+                            <li><i class="fas fa-check text-success me-2"></i>Good grasp of fundamental concepts</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Solid problem-solving skills</li>
+                            {% elif results.score >= 40 %}
+                            <li><i class="fas fa-check text-success me-2"></i>Basic understanding of concepts</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Willingness to attempt challenging questions</li>
+                            {% else %}
+                            <li><i class="fas fa-check text-success me-2"></i>Participated in the full interview</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Identified areas for improvement</li>
+                            {% endif %}
+                        </ul>
+                        
+                        <h6 class="mt-4"><i class="fas fa-target text-danger me-2"></i>Areas for Improvement</h6>
+                        <ul class="list-unstyled">
+                            {% if results.score < 80 %}
+                            <li><i class="fas fa-arrow-up text-info me-2"></i>Practice more technical concepts</li>
+                            {% endif %}
+                            {% if results.score < 60 %}
+                            <li><i class="fas fa-arrow-up text-info me-2"></i>Review fundamental algorithms and data structures</li>
+                            <li><i class="fas fa-arrow-up text-info me-2"></i>Improve problem decomposition skills</li>
+                            {% endif %}
+                            {% if results.score < 40 %}
+                            <li><i class="fas fa-arrow-up text-info me-2"></i>Focus on basic programming concepts</li>
+                            <li><i class="fas fa-arrow-up text-info me-2"></i>Practice explaining thought processes clearly</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-rocket text-success me-2"></i>Next Steps
+                    </h5>
+                    
+                    <div class="recommendation-card">
+                        <h6><i class="fas fa-repeat text-primary me-2"></i>Continue Practicing</h6>
+                        <p class="mb-2">Regular practice is key to improvement.</p>
+                        <a href="{{ url_for('practice') }}" class="btn btn-sm btn-outline-primary">
+                            Practice Mode
+                        </a>
+                    </div>
+                    
+                    <div class="recommendation-card">
+                        <h6><i class="fas fa-book text-info me-2"></i>Study Resources</h6>
+                        <p class="mb-2">Review materials for your weak areas.</p>
+                        <a href="/resources" class="btn btn-sm btn-outline-info">
+                            Learning Resources
+                        </a>
+                    </div>
+                    
+                    <div class="recommendation-card">
+                        <h6><i class="fas fa-users text-warning me-2"></i>Mock Interview</h6>
+                        <p class="mb-2">Take another mock interview to track progress.</p>
+                        <a href="{{ url_for('mock_interview') }}" class="btn btn-sm btn-outline-warning">
+                            Retake Mock
+                        </a>
+                    </div>
+                    
+                    <div class="recommendation-card">
+                        <h6><i class="fas fa-chart-line text-success me-2"></i>Track Progress</h6>
+                        <p class="mb-2">Monitor your improvement over time.</p>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-sm btn-outline-success">
+                            View Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="row mt-5 mb-5">
+        <div class="col-12 text-center">
+            <div class="d-flex flex-wrap justify-content-center gap-3">
+                <a href="{{ url_for('practice') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-play me-2"></i>Continue Practice
+                </a>
+                <a href="{{ url_for('mock_interview') }}" class="btn btn-outline-primary btn-lg">
+                    <i class="fas fa-redo me-2"></i>Retake Mock Interview
+                </a>
+                <a href="/feedback" class="btn btn-outline-success btn-lg">
+                    <i class="fas fa-eye me-2"></i>Detailed Feedback
+                </a>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary btn-lg">
+                    <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Achievement Badge -->
+    {% if results.score >= 80 %}
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-success text-center">
+                <i class="fas fa-medal text-warning display-4 mb-2"></i>
+                <h4>Achievement Unlocked!</h4>
+                <p class="mb-0">🏆 <strong>Interview Expert</strong> - Scored 80% or higher in mock interview</p>
+            </div>
+        </div>
+    </div>
+    {% elif results.total_questions >= 10 %}
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <i class="fas fa-star text-warning display-4 mb-2"></i>
+                <h4>Achievement Unlocked!</h4>
+                <p class="mb-0">⭐ <strong>Persistent Learner</strong> - Completed a full mock interview session</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Add some interactive elements
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate progress bar
+    const progressBar = document.querySelector('.progress-bar');
+    if (progressBar) {
+        const width = progressBar.style.width;
+        progressBar.style.width = '0%';
+        setTimeout(() => {
+            progressBar.style.transition = 'width 2s ease-in-out';
+            progressBar.style.width = width;
+        }, 500);
+    }
+    
+    // Add confetti effect for high scores
+    const score = {{ results.score }};
+    if (score >= 80) {
+        // Simple confetti effect
+        setTimeout(() => {
+            for (let i = 0; i < 50; i++) {
+                createConfetti();
+            }
+        }, 1000);
+    }
+});
+
+function createConfetti() {
+    const confetti = document.createElement('div');
+    confetti.style.position = 'fixed';
+    confetti.style.width = '10px';
+    confetti.style.height = '10px';
+    confetti.style.backgroundColor = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff'][Math.floor(Math.random() * 5)];
+    confetti.style.left = Math.random() * window.innerWidth + 'px';
+    confetti.style.top = '-10px';
+    confetti.style.zIndex = '9999';
+    confetti.style.borderRadius = '50%';
+    document.body.appendChild(confetti);
+    
+    const animation = confetti.animate([
+        { transform: 'translateY(-10px) rotate(0deg)', opacity: 1 },
+        { transform: `translateY(${window.innerHeight + 10}px) rotate(360deg)`, opacity: 0 }
+    ], {
+        duration: 3000,
+        easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+    });
+    
+    animation.addEventListener('finish', () => {
+        confetti.remove();
+    });
+}
+</script>
+{% endblock %}

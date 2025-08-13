@@ -1,0 +1,415 @@
+{% extends "base.html" %}
+
+{% block title %}Learning Resources - Web-Inter-Prep{% endblock %}
+
+{% block extra_css %}
+<style>
+    .resources-header {
+        background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);
+        color: white;
+        padding: 3rem 0;
+        margin-bottom: 2rem;
+    }
+    
+    .resource-card {
+        border: none;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    
+    .resource-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    .resource-type {
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .section-header {
+        border-bottom: 3px solid;
+        padding-bottom: 0.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .technical-section {
+        border-color: #007bff;
+    }
+    
+    .behavioral-section {
+        border-color: #28a745;
+    }
+    
+    .general-section {
+        border-color: #6f42c1;
+    }
+    
+    .resource-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+    }
+    
+    .technical-icon {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        color: white;
+    }
+    
+    .behavioral-icon {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+    }
+    
+    .general-icon {
+        background: linear-gradient(135deg, #6f42c1, #e83e8c);
+        color: white;
+    }
+    
+    .quick-tips {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border-radius: 10px;
+        padding: 2rem;
+        margin-bottom: 3rem;
+    }
+    
+    .tip-item {
+        border-left: 4px solid #007bff;
+        padding-left: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .recommendation-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+        color: white;
+        font-size: 0.7rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+        font-weight: bold;
+    }
+    
+    .external-link-icon {
+        font-size: 0.8rem;
+        opacity: 0.7;
+        margin-left: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="resources-header">
+    <div class="container text-center">
+        <i class="fas fa-book-open display-1 mb-3"></i>
+        <h1 class="display-4 fw-bold">Learning Resources</h1>
+        <p class="lead">Curated materials to boost your interview preparation</p>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Quick Tips Section -->
+    <div class="quick-tips">
+        <h3 class="text-center mb-4">
+            <i class="fas fa-lightbulb text-warning me-2"></i>Quick Study Tips
+        </h3>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="tip-item">
+                    <h6><i class="fas fa-clock text-primary me-2"></i>Consistent Practice</h6>
+                    <p class="mb-0">Study for 30-60 minutes daily rather than cramming before interviews.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="tip-item" style="border-left-color: #28a745;">
+                    <h6><i class="fas fa-users text-success me-2"></i>Mock Interviews</h6>
+                    <p class="mb-0">Practice with friends or use our mock interview feature regularly.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="tip-item" style="border-left-color: #ffc107;">
+                    <h6><i class="fas fa-target text-warning me-2"></i>Focus on Weak Areas</h6>
+                    <p class="mb-0">Identify and spend extra time on topics where you struggle.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Technical Resources -->
+    <section class="mb-5">
+        <h2 class="section-header technical-section">
+            <i class="fas fa-code text-primary me-2"></i>Technical Interview Resources
+        </h2>
+        <div class="row">
+            {% for resource in resources.technical %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card resource-card position-relative">
+                    {% if loop.index == 1 %}
+                    <div class="recommendation-badge">
+                        <i class="fas fa-star me-1"></i>Recommended
+                    </div>
+                    {% endif %}
+                    <div class="card-body text-center">
+                        <div class="resource-icon technical-icon">
+                            <i class="fas fa-laptop-code display-6"></i>
+                        </div>
+                        <h5 class="card-title">{{ resource.title }}</h5>
+                        <p class="resource-type text-primary mb-2">{{ resource.type }}</p>
+                        <p class="card-text">{{ resource.description }}</p>
+                        <a href="{{ resource.url }}" target="_blank" class="btn btn-primary">
+                            Visit Resource<i class="fas fa-external-link-alt external-link-icon"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Additional Technical Tips -->
+        <div class="alert alert-info">
+            <h6><i class="fas fa-info-circle me-2"></i>Technical Interview Tips:</h6>
+            <ul class="mb-0">
+                <li>Always think out loud and explain your approach</li>
+                <li>Start with a brute force solution, then optimize</li>
+                <li>Consider edge cases and test your code</li>
+                <li>Know your time and space complexity</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- Behavioral Resources -->
+    <section class="mb-5">
+        <h2 class="section-header behavioral-section">
+            <i class="fas fa-comments text-success me-2"></i>Behavioral Interview Resources
+        </h2>
+        <div class="row">
+            {% for resource in resources.behavioral %}
+            <div class="col-lg-6 col-md-6 mb-4">
+                <div class="card resource-card">
+                    <div class="card-body text-center">
+                        <div class="resource-icon behavioral-icon">
+                            <i class="fas fa-user-tie display-6"></i>
+                        </div>
+                        <h5 class="card-title">{{ resource.title }}</h5>
+                        <p class="resource-type text-success mb-2">{{ resource.type }}</p>
+                        <p class="card-text">{{ resource.description }}</p>
+                        <a href="{{ resource.url }}" target="_blank" class="btn btn-success">
+                            Visit Resource<i class="fas fa-external-link-alt external-link-icon"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- STAR Method Guide -->
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-star text-warning me-2"></i>The STAR Method
+                </h5>
+                <p class="card-text">Structure your behavioral answers using this proven framework:</p>
+                <div class="row">
+                    <div class="col-md-3 text-center mb-3">
+                        <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <strong>S</strong>
+                        </div>
+                        <h6 class="mt-2">Situation</h6>
+                        <small class="text-muted">Set the context</small>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <strong>T</strong>
+                        </div>
+                        <h6 class="mt-2">Task</h6>
+                        <small class="text-muted">Describe your role</small>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <div class="bg-warning text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <strong>A</strong>
+                        </div>
+                        <h6 class="mt-2">Action</h6>
+                        <small class="text-muted">Explain what you did</small>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <div class="bg-info text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <strong>R</strong>
+                        </div>
+                        <h6 class="mt-2">Result</h6>
+                        <small class="text-muted">Share the outcome</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- General Resources -->
+    <section class="mb-5">
+        <h2 class="section-header general-section">
+            <i class="fas fa-graduation-cap text-purple me-2"></i>General Interview Resources
+        </h2>
+        <div class="row">
+            {% for resource in resources.general %}
+            <div class="col-lg-6 col-md-6 mb-4">
+                <div class="card resource-card">
+                    <div class="card-body text-center">
+                        <div class="resource-icon general-icon">
+                            <i class="fas fa-book display-6"></i>
+                        </div>
+                        <h5 class="card-title">{{ resource.title }}</h5>
+                        <p class="resource-type text-purple mb-2">{{ resource.type }}</p>
+                        <p class="card-text">{{ resource.description }}</p>
+                        <a href="{{ resource.url }}" target="_blank" class="btn btn-purple" style="background-color: #6f42c1; border-color: #6f42c1; color: white;">
+                            Visit Resource<i class="fas fa-external-link-alt external-link-icon"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Study Plan Section -->
+    <section class="mb-5">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title text-center mb-4">
+                    <i class="fas fa-calendar-alt text-primary me-2"></i>Suggested 4-Week Study Plan
+                </h3>
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <div class="card h-100" style="border-color: #007bff;">
+                            <div class="card-header bg-primary text-white text-center">
+                                <h6 class="mb-0">Week 1</h6>
+                            </div>
+                            <div class="card-body">
+                                <h6>Foundation</h6>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-check text-success me-2"></i>Basic algorithms</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Data structures</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>STAR method practice</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card h-100" style="border-color: #28a745;">
+                            <div class="card-header bg-success text-white text-center">
+                                <h6 class="mb-0">Week 2</h6>
+                            </div>
+                            <div class="card-body">
+                                <h6>Practice</h6>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-check text-success me-2"></i>Medium problems</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>System design basics</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Mock interviews</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card h-100" style="border-color: #ffc107;">
+                            <div class="card-header bg-warning text-white text-center">
+                                <h6 class="mb-0">Week 3</h6>
+                            </div>
+                            <div class="card-body">
+                                <h6>Advanced</h6>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-check text-success me-2"></i>Hard problems</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>System design</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Company research</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card h-100" style="border-color: #dc3545;">
+                            <div class="card-header bg-danger text-white text-center">
+                                <h6 class="mb-0">Week 4</h6>
+                            </div>
+                            <div class="card-body">
+                                <h6>Review</h6>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-check text-success me-2"></i>Weak areas</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Final mock tests</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Interview prep</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action -->
+    <div class="text-center mb-5">
+        <h3>Ready to Start Your Preparation?</h3>
+        <p class="lead text-muted">Put these resources to use with our practice tools</p>
+        <div class="d-flex flex-wrap justify-content-center gap-3">
+            <a href="{{ url_for('practice') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-play me-2"></i>Start Practice
+            </a>
+            <a href="{{ url_for('mock_interview') }}" class="btn btn-outline-primary btn-lg">
+                <i class="fas fa-stopwatch me-2"></i>Take Mock Interview
+            </a>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary btn-lg">
+                <i class="fas fa-tachometer-alt me-2"></i>View Progress
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Add some interactive features
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate resource cards on scroll
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, observerOptions);
+    
+    // Observe all resource cards
+    document.querySelectorAll('.resource-card').forEach(card => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(card);
+    });
+    
+    // Track external link clicks
+    document.querySelectorAll('a[target="_blank"]').forEach(link => {
+        link.addEventListener('click', function() {
+            console.log('External resource visited:', this.href);
+            // You could send analytics data here
+        });
+    });
+});
+
+// Add tooltips to study plan items
+if (typeof bootstrap !== 'undefined') {
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(element => {
+        new bootstrap.Tooltip(element);
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,613 @@
+{% extends "base.html" %}
+
+{% block title %}Custom Practice - Web-Inter-Prep{% endblock %}
+
+{% block extra_css %}
+<style>
+    .custom-header {
+        background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+    }
+    
+    .filter-card {
+        border: none;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .custom-checkbox {
+        transform: scale(1.2);
+        margin-right: 0.5rem;
+    }
+    
+    .difficulty-selector {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .difficulty-option {
+        flex: 1;
+        min-width: 120px;
+    }
+    
+    .difficulty-option input[type="radio"] {
+        display: none;
+    }
+    
+    .difficulty-option label {
+        display: block;
+        padding: 1rem;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background-color: white;
+    }
+    
+    .difficulty-option input[type="radio"]:checked + label {
+        border-color: #007bff;
+        background-color: #007bff;
+        color: white;
+    }
+    
+    .difficulty-easy:checked + label {
+        border-color: #28a745;
+        background-color: #28a745;
+    }
+    
+    .difficulty-medium:checked + label {
+        border-color: #ffc107;
+        background-color: #ffc107;
+        color: #000;
+    }
+    
+    .difficulty-hard:checked + label {
+        border-color: #dc3545;
+        background-color: #dc3545;
+    }
+    
+    .topic-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    
+    .topic-card {
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .topic-card:hover {
+        border-color: #007bff;
+        transform: translateY(-2px);
+    }
+    
+    .topic-card.selected {
+        border-color: #007bff;
+        background-color: #f8f9ff;
+    }
+    
+    .topic-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        color: #007bff;
+    }
+    
+    .session-preview {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+    }
+    
+    .start-button {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        padding: 1rem 2rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: transform 0.2s ease;
+    }
+    
+    .start-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+    }
+    
+    .question-count-display {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #007bff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="custom-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1><i class="fas fa-sliders-h me-2"></i>Custom Practice Session</h1>
+                <p class="mb-0">Customize your practice by selecting topics, difficulty, and session length</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="{{ url_for('dashboard') }}" class="btn btn-light">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Question Type Selection -->
+            <div class="card filter-card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-tags text-primary me-2"></i>Question Types
+                    </h5>
+                    <p class="text-muted">Select the types of questions you want to practice</p>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input custom-checkbox" type="checkbox" value="technical" id="type-technical" checked>
+                                <label class="form-check-label" for="type-technical">
+                                    <i class="fas fa-code text-primary me-2"></i>
+                                    <strong>Technical Questions</strong><br>
+                                    <small class="text-muted">Algorithms, data structures, coding problems</small>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input custom-checkbox" type="checkbox" value="behavioral" id="type-behavioral" checked>
+                                <label class="form-check-label" for="type-behavioral">
+                                    <i class="fas fa-comments text-success me-2"></i>
+                                    <strong>Behavioral Questions</strong><br>
+                                    <small class="text-muted">Leadership, teamwork, problem-solving scenarios</small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Difficulty Selection -->
+            <div class="card filter-card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-signal text-warning me-2"></i>Difficulty Level
+                    </h5>
+                    <p class="text-muted">Choose your preferred difficulty level</p>
+                    
+                    <div class="difficulty-selector">
+                        <div class="difficulty-option">
+                            <input type="radio" name="difficulty" value="easy" id="diff-easy" class="difficulty-easy">
+                            <label for="diff-easy">
+                                <i class="fas fa-smile text-success display-6 mb-2"></i>
+                                <h6>Easy</h6>
+                                <small>Fundamental concepts</small>
+                            </label>
+                        </div>
+                        <div class="difficulty-option">
+                            <input type="radio" name="difficulty" value="medium" id="diff-medium" class="difficulty-medium" checked>
+                            <label for="diff-medium">
+                                <i class="fas fa-meh text-warning display-6 mb-2"></i>
+                                <h6>Medium</h6>
+                                <small>Moderate complexity</small>
+                            </label>
+                        </div>
+                        <div class="difficulty-option">
+                            <input type="radio" name="difficulty" value="hard" id="diff-hard" class="difficulty-hard">
+                            <label for="diff-hard">
+                                <i class="fas fa-frown text-danger display-6 mb-2"></i>
+                                <h6>Hard</h6>
+                                <small>Advanced problems</small>
+                            </label>
+                        </div>
+                        <div class="difficulty-option">
+                            <input type="radio" name="difficulty" value="mixed" id="diff-mixed">
+                            <label for="diff-mixed">
+                                <i class="fas fa-random text-info display-6 mb-2"></i>
+                                <h6>Mixed</h6>
+                                <small>All difficulty levels</small>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Topic Selection -->
+            <div class="card filter-card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-list text-info me-2"></i>Specific Topics
+                        <small class="text-muted">(Optional)</small>
+                    </h5>
+                    <p class="text-muted">Select specific topics to focus on, or leave unselected for all topics</p>
+                    
+                    <div class="topic-grid" id="topic-grid">
+                        <div class="topic-card" data-topic="javascript">
+                            <div class="topic-icon">
+                                <i class="fab fa-js-square"></i>
+                            </div>
+                            <h6>JavaScript</h6>
+                            <small class="text-muted">ES6+, Async, DOM</small>
+                        </div>
+                        <div class="topic-card" data-topic="algorithms">
+                            <div class="topic-icon">
+                                <i class="fas fa-project-diagram"></i>
+                            </div>
+                            <h6>Algorithms</h6>
+                            <small class="text-muted">Sorting, Searching, DP</small>
+                        </div>
+                        <div class="topic-card" data-topic="data-structures">
+                            <div class="topic-icon">
+                                <i class="fas fa-sitemap"></i>
+                            </div>
+                            <h6>Data Structures</h6>
+                            <small class="text-muted">Arrays, Trees, Graphs</small>
+                        </div>
+                        <div class="topic-card" data-topic="system-design">
+                            <div class="topic-icon">
+                                <i class="fas fa-building"></i>
+                            </div>
+                            <h6>System Design</h6>
+                            <small class="text-muted">Architecture, Scaling</small>
+                        </div>
+                        <div class="topic-card" data-topic="databases">
+                            <div class="topic-icon">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <h6>Databases</h6>
+                            <small class="text-muted">SQL, NoSQL, Design</small>
+                        </div>
+                        <div class="topic-card" data-topic="networking">
+                            <div class="topic-icon">
+                                <i class="fas fa-network-wired"></i>
+                            </div>
+                            <h6>Networking</h6>
+                            <small class="text-muted">HTTP, TCP/IP, APIs</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Session Settings -->
+            <div class="card filter-card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-cog text-secondary me-2"></i>Session Settings
+                    </h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="question-count" class="form-label">Number of Questions</label>
+                            <select class="form-select" id="question-count">
+                                <option value="5">5 Questions (~15 minutes)</option>
+                                <option value="10" selected>10 Questions (~30 minutes)</option>
+                                <option value="15">15 Questions (~45 minutes)</option>
+                                <option value="20">20 Questions (~60 minutes)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="time-limit" class="form-label">Time per Question</label>
+                            <select class="form-select" id="time-limit">
+                                <option value="0">No Time Limit</option>
+                                <option value="60">1 Minute</option>
+                                <option value="120">2 Minutes</option>
+                                <option value="300" selected>5 Minutes</option>
+                                <option value="600">10 Minutes</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="show-hints" checked>
+                                <label class="form-check-label" for="show-hints">
+                                    Allow hints during practice
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="immediate-feedback" checked>
+                                <label class="form-check-label" for="immediate-feedback">
+                                    Show immediate feedback after each question
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Session Preview -->
+        <div class="col-lg-4">
+            <div class="sticky-top" style="top: 2rem;">
+                <div class="session-preview">
+                    <h5 class="text-center mb-3">
+                        <i class="fas fa-eye text-primary me-2"></i>Session Preview
+                    </h5>
+                    
+                    <div class="text-center mb-3">
+                        <div class="question-count-display" id="preview-count">10</div>
+                        <small class="text-muted">Questions selected</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6><i class="fas fa-tags me-2"></i>Question Types:</h6>
+                        <div id="preview-types">
+                            <span class="badge bg-primary me-1">Technical</span>
+                            <span class="badge bg-success me-1">Behavioral</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6><i class="fas fa-signal me-2"></i>Difficulty:</h6>
+                        <div id="preview-difficulty">
+                            <span class="badge bg-warning">Medium</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6><i class="fas fa-list me-2"></i>Topics:</h6>
+                        <div id="preview-topics">
+                            <small class="text-muted">All topics included</small>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6><i class="fas fa-clock me-2"></i>Estimated Time:</h6>
+                        <div id="preview-time">
+                            <span class="text-info">~30 minutes</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6><i class="fas fa-cog me-2"></i>Settings:</h6>
+                        <div id="preview-settings">
+                            <small class="d-block"><i class="fas fa-lightbulb me-1"></i>Hints enabled</small>
+                            <small class="d-block"><i class="fas fa-comment me-1"></i>Immediate feedback</small>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-success start-button w-100" id="start-session">
+                        <i class="fas fa-play me-2"></i>Start Custom Session
+                    </button>
+                    
+                    <div class="text-center mt-3">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Your progress will be saved automatically
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Custom practice session configuration
+let sessionConfig = {
+    types: ['technical', 'behavioral'],
+    difficulty: 'medium',
+    topics: [],
+    questionCount: 10,
+    timeLimit: 300,
+    showHints: true,
+    immediateFeedback: true
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCustomPractice();
+    updatePreview();
+});
+
+function initializeCustomPractice() {
+    // Question type checkboxes
+    document.querySelectorAll('input[type="checkbox"][id^="type-"]').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            updateSessionConfig();
+            updatePreview();
+        });
+    });
+    
+    // Difficulty radio buttons
+    document.querySelectorAll('input[name="difficulty"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            updateSessionConfig();
+            updatePreview();
+        });
+    });
+    
+    // Topic cards
+    document.querySelectorAll('.topic-card').forEach(card => {
+        card.addEventListener('click', function() {
+            this.classList.toggle('selected');
+            updateSessionConfig();
+            updatePreview();
+        });
+    });
+    
+    // Session settings
+    document.getElementById('question-count').addEventListener('change', function() {
+        updateSessionConfig();
+        updatePreview();
+    });
+    
+    document.getElementById('time-limit').addEventListener('change', function() {
+        updateSessionConfig();
+        updatePreview();
+    });
+    
+    document.getElementById('show-hints').addEventListener('change', function() {
+        updateSessionConfig();
+        updatePreview();
+    });
+    
+    document.getElementById('immediate-feedback').addEventListener('change', function() {
+        updateSessionConfig();
+        updatePreview();
+    });
+    
+    // Start session button
+    document.getElementById('start-session').addEventListener('click', function() {
+        startCustomSession();
+    });
+}
+
+function updateSessionConfig() {
+    // Update question types
+    sessionConfig.types = [];
+    document.querySelectorAll('input[type="checkbox"][id^="type-"]:checked').forEach(checkbox => {
+        sessionConfig.types.push(checkbox.value);
+    });
+    
+    // Update difficulty
+    const selectedDifficulty = document.querySelector('input[name="difficulty"]:checked');
+    if (selectedDifficulty) {
+        sessionConfig.difficulty = selectedDifficulty.value;
+    }
+    
+    // Update topics
+    sessionConfig.topics = [];
+    document.querySelectorAll('.topic-card.selected').forEach(card => {
+        sessionConfig.topics.push(card.dataset.topic);
+    });
+    
+    // Update session settings
+    sessionConfig.questionCount = parseInt(document.getElementById('question-count').value);
+    sessionConfig.timeLimit = parseInt(document.getElementById('time-limit').value);
+    sessionConfig.showHints = document.getElementById('show-hints').checked;
+    sessionConfig.immediateFeedback = document.getElementById('immediate-feedback').checked;
+}
+
+function updatePreview() {
+    // Update question count
+    document.getElementById('preview-count').textContent = sessionConfig.questionCount;
+    
+    // Update question types
+    const typesContainer = document.getElementById('preview-types');
+    typesContainer.innerHTML = '';
+    sessionConfig.types.forEach(type => {
+        const badge = document.createElement('span');
+        badge.className = `badge ${type === 'technical' ? 'bg-primary' : 'bg-success'} me-1`;
+        badge.textContent = type.charAt(0).toUpperCase() + type.slice(1);
+        typesContainer.appendChild(badge);
+    });
+    
+    if (sessionConfig.types.length === 0) {
+        typesContainer.innerHTML = '<small class="text-muted">No types selected</small>';
+    }
+    
+    // Update difficulty
+    const difficultyContainer = document.getElementById('preview-difficulty');
+    const difficultyColors = {
+        'easy': 'bg-success',
+        'medium': 'bg-warning',
+        'hard': 'bg-danger',
+        'mixed': 'bg-info'
+    };
+    difficultyContainer.innerHTML = `<span class="badge ${difficultyColors[sessionConfig.difficulty]}">${sessionConfig.difficulty.charAt(0).toUpperCase() + sessionConfig.difficulty.slice(1)}</span>`;
+    
+    // Update topics
+    const topicsContainer = document.getElementById('preview-topics');
+    if (sessionConfig.topics.length === 0) {
+        topicsContainer.innerHTML = '<small class="text-muted">All topics included</small>';
+    } else {
+        topicsContainer.innerHTML = sessionConfig.topics.map(topic => 
+            `<span class="badge bg-light text-dark me-1">${topic.replace('-', ' ')}</span>`
+        ).join('');
+    }
+    
+    // Update estimated time
+    const timePerQuestion = sessionConfig.timeLimit === 0 ? 180 : sessionConfig.timeLimit; // Default 3 minutes if no limit
+    const totalTime = Math.round((sessionConfig.questionCount * timePerQuestion) / 60);
+    document.getElementById('preview-time').innerHTML = `<span class="text-info">~${totalTime} minutes</span>`;
+    
+    // Update settings
+    const settingsContainer = document.getElementById('preview-settings');
+    settingsContainer.innerHTML = '';
+    
+    if (sessionConfig.showHints) {
+        settingsContainer.innerHTML += '<small class="d-block"><i class="fas fa-lightbulb me-1"></i>Hints enabled</small>';
+    }
+    
+    if (sessionConfig.immediateFeedback) {
+        settingsContainer.innerHTML += '<small class="d-block"><i class="fas fa-comment me-1"></i>Immediate feedback</small>';
+    }
+    
+    if (sessionConfig.timeLimit > 0) {
+        settingsContainer.innerHTML += `<small class="d-block"><i class="fas fa-clock me-1"></i>${sessionConfig.timeLimit / 60} min per question</small>`;
+    } else {
+        settingsContainer.innerHTML += '<small class="d-block"><i class="fas fa-infinity me-1"></i>No time limit</small>';
+    }
+    
+    // Enable/disable start button
+    const startButton = document.getElementById('start-session');
+    if (sessionConfig.types.length === 0) {
+        startButton.disabled = true;
+        startButton.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Select at least one question type';
+    } else {
+        startButton.disabled = false;
+        startButton.innerHTML = '<i class="fas fa-play me-2"></i>Start Custom Session';
+    }
+}
+
+function startCustomSession() {
+    if (sessionConfig.types.length === 0) {
+        showMessage('Please select at least one question type', 'warning');
+        return;
+    }
+    
+    // Store session config in localStorage for the practice page
+    localStorage.setItem('customSessionConfig', JSON.stringify(sessionConfig));
+    
+    // Show loading state
+    const startButton = document.getElementById('start-session');
+    startButton.disabled = true;
+    startButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Starting Session...';
+    
+    // Simulate session creation delay
+    setTimeout(() => {
+        // Redirect to practice page with custom config
+        window.location.href = '/practice?custom=true';
+    }, 1000);
+}
+
+// Enhanced message function for custom practice
+function showMessage(message, type = 'info') {
+    const alertClass = type === 'error' ? 'danger' : type;
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `alert alert-${alertClass} alert-dismissible fade show`;
+    messageDiv.style.cssText = 'position: fixed; top: 100px; right: 20px; z-index: 9999; min-width: 300px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);';
+    messageDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(messageDiv);
+    
+    setTimeout(() => {
+        if (messageDiv.parentNode) {
+            messageDiv.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

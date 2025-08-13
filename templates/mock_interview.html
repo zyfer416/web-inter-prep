@@ -1,0 +1,481 @@
+{% extends "base.html" %}
+
+{% block title %}Mock Interview - Web-Inter-Prep{% endblock %}
+
+{% block extra_css %}
+<style>
+    .mock-header {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+    }
+    
+    .timer-container {
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+    }
+    
+    .timer-display {
+        font-family: 'Courier New', monospace;
+        font-size: 2rem;
+        font-weight: bold;
+        color: #dc3545;
+        text-align: center;
+    }
+    
+    .question-counter {
+        font-size: 1.1rem;
+        font-weight: 500;
+    }
+    
+    .answer-textarea {
+        min-height: 200px;
+        resize: vertical;
+    }
+    
+    .progress-container {
+        margin-bottom: 2rem;
+    }
+    
+    .interview-card {
+        min-height: 500px;
+    }
+    
+    .time-warning {
+        color: #ffc107 !important;
+    }
+    
+    .time-danger {
+        color: #dc3545 !important;
+        animation: pulse 1s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+    
+    .mock-controls {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Timer Container -->
+<div class="timer-container">
+    <div class="text-center">
+        <div class="timer-display" id="timer-display">30:00</div>
+        <small class="text-muted">Time Remaining</small>
+    </div>
+</div>
+
+<!-- Mock Controls -->
+<div class="mock-controls">
+    <button class="btn btn-danger btn-sm" onclick="endInterview()" id="end-btn">
+        <i class="fas fa-stop me-1"></i>End Interview
+    </button>
+</div>
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="mock-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1><i class="fas fa-stopwatch me-2"></i>Mock Interview Session</h1>
+                    <p class="mb-0">Answer each question to the best of your ability. You have 30 minutes total.</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <div class="question-counter">
+                        <span id="questions-answered">0</span> questions answered
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Progress Bar -->
+        <div class="progress-container">
+            <div class="progress">
+                <div class="progress-bar bg-warning" role="progressbar" style="width: 0%" id="progress-bar"></div>
+            </div>
+            <small class="text-muted mt-1 d-block">Interview Progress</small>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading-state" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3">Preparing your first question...</p>
+        </div>
+
+        <!-- Interview Container -->
+        <div id="interview-container" style="display: none;">
+            <div class="row">
+                <div class="col-lg-8 mx-auto">
+                    <div class="card interview-card shadow">
+                        <div class="card-body p-4">
+                            <!-- Question Display -->
+                            <div id="question-display">
+                                <!-- Question content will be loaded here -->
+                            </div>
+
+                            <!-- Answer Section -->
+                            <div class="mt-4">
+                                <label for="user-answer" class="form-label h6">Your Answer:</label>
+                                <textarea class="form-control answer-textarea" id="user-answer" 
+                                         placeholder="Type your answer here..."></textarea>
+                                <div class="form-text">
+                                    Take your time to provide a comprehensive answer. Quality matters more than speed.
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="d-flex justify-content-between mt-4">
+                                <div>
+                                    <button class="btn btn-outline-secondary" onclick="skipQuestion()" id="skip-btn">
+                                        <i class="fas fa-forward me-2"></i>Skip Question
+                                    </button>
+                                </div>
+                                <div>
+                                    <button class="btn btn-primary btn-lg" onclick="submitAnswer()" id="submit-btn">
+                                        <i class="fas fa-check me-2"></i>Submit & Next
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interview Complete State -->
+        <div id="complete-state" class="text-center py-5" style="display: none;">
+            <div class="card">
+                <div class="card-body">
+                    <i class="fas fa-flag-checkered text-success display-2 mb-3"></i>
+                    <h2>Interview Complete!</h2>
+                    <p class="lead">Great job! Your mock interview session has ended.</p>
+                    <div class="spinner-border text-primary mt-3" role="status">
+                        <span class="visually-hidden">Processing results...</span>
+                    </div>
+                    <p class="mt-2">Calculating your results...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Mock interview JavaScript
+let currentQuestion = null;
+let questionsAnswered = 0;
+let timeRemaining = 30 * 60; // 30 minutes in seconds
+let timerInterval = null;
+let sessionStartTime = new Date();
+
+// Initialize mock interview
+document.addEventListener('DOMContentLoaded', function() {
+    startMockInterview();
+});
+
+function startMockInterview() {
+    // Start timer
+    startTimer(30); // 30 minutes
+    
+    // Load first question
+    loadNextMockQuestion();
+}
+
+function startTimer(durationMinutes) {
+    timeRemaining = durationMinutes * 60;
+    const timerElement = document.getElementById('timer-display');
+    
+    timerInterval = setInterval(function() {
+        const minutes = Math.floor(timeRemaining / 60);
+        const seconds = timeRemaining % 60;
+        
+        timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        
+        // Change color based on time remaining
+        if (timeRemaining <= 300) { // 5 minutes
+            timerElement.className = 'timer-display time-danger';
+        } else if (timeRemaining <= 600) { // 10 minutes
+            timerElement.className = 'timer-display time-warning';
+        } else {
+            timerElement.className = 'timer-display';
+        }
+        
+        if (timeRemaining <= 0) {
+            clearInterval(timerInterval);
+            endInterview();
+        }
+        
+        timeRemaining--;
+    }, 1000);
+}
+
+function loadNextMockQuestion() {
+    fetch('/mock/question')
+    .then(response => response.json())
+    .then(data => {
+        if (data.question) {
+            currentQuestion = data.question;
+            displayMockQuestion(data.question);
+            
+            // Hide loading, show interview
+            document.getElementById('loading-state').style.display = 'none';
+            document.getElementById('interview-container').style.display = 'block';
+        } else {
+            showMessage('Failed to load question', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('Error loading question', 'error');
+    });
+}
+
+function displayMockQuestion(question) {
+    const questionDisplay = document.getElementById('question-display');
+    
+    const difficultyColors = {
+        'easy': 'success',
+        'medium': 'warning',
+        'hard': 'danger'
+    };
+    
+    const typeColors = {
+        'technical': 'primary',
+        'behavioral': 'success'
+    };
+    
+    const typeIcons = {
+        'technical': 'code',
+        'behavioral': 'comments'
+    };
+    
+    const questionHtml = `
+        <div class="question-header mb-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="d-flex gap-2">
+                    <span class="badge bg-${typeColors[question.type]} fs-6">
+                        <i class="fas fa-${typeIcons[question.type]} me-1"></i>
+                        ${question.type.charAt(0).toUpperCase() + question.type.slice(1)}
+                    </span>
+                    <span class="badge bg-${difficultyColors[question.difficulty]} fs-6">
+                        <i class="fas fa-signal me-1"></i>
+                        ${question.difficulty.charAt(0).toUpperCase() + question.difficulty.slice(1)}
+                    </span>
+                </div>
+                <small class="text-muted">Question #${question.id}</small>
+            </div>
+            
+            <h3 class="question-text">${question.question}</h3>
+            
+            ${question.tags ? `
+                <div class="mt-3">
+                    <small class="text-muted">Topics: </small>
+                    ${question.tags.map(tag => `<span class="badge bg-light text-dark me-1">${tag}</span>`).join('')}
+                </div>
+            ` : ''}
+        </div>
+    `;
+    
+    questionDisplay.innerHTML = questionHtml;
+    
+    // Clear previous answer
+    document.getElementById('user-answer').value = '';
+    document.getElementById('user-answer').focus();
+}
+
+function submitAnswer() {
+    if (!currentQuestion) return;
+    
+    const userAnswer = document.getElementById('user-answer').value.trim();
+    
+    if (userAnswer.length < 10) {
+        showMessage('Please provide a more detailed answer (at least 10 characters)', 'warning');
+        return;
+    }
+    
+    // Disable submit button to prevent double submission
+    const submitBtn = document.getElementById('submit-btn');
+    const skipBtn = document.getElementById('skip-btn');
+    submitBtn.disabled = true;
+    skipBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Submitting...';
+    
+    // Calculate time taken for this question
+    const timeTaken = 30 * 60 - timeRemaining;
+    
+    fetch('/mock/submit', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            question_id: currentQuestion.id,
+            user_answer: userAnswer,
+            time_taken: timeTaken
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            questionsAnswered = data.questions_answered;
+            updateProgress();
+            
+            // Load next question after a brief delay
+            setTimeout(() => {
+                loadNextMockQuestion();
+                // Re-enable buttons
+                submitBtn.disabled = false;
+                skipBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-check me-2"></i>Submit & Next';
+            }, 1000);
+        } else {
+            showMessage('Failed to submit answer', 'error');
+            submitBtn.disabled = false;
+            skipBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-check me-2"></i>Submit & Next';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('Error submitting answer', 'error');
+        submitBtn.disabled = false;
+        skipBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-check me-2"></i>Submit & Next';
+    });
+}
+
+function skipQuestion() {
+    if (!currentQuestion) return;
+    
+    // Submit empty answer
+    const submitBtn = document.getElementById('submit-btn');
+    const skipBtn = document.getElementById('skip-btn');
+    skipBtn.disabled = true;
+    submitBtn.disabled = true;
+    skipBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Skipping...';
+    
+    fetch('/mock/submit', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            question_id: currentQuestion.id,
+            user_answer: '',
+            time_taken: 0
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            questionsAnswered = data.questions_answered;
+            updateProgress();
+            loadNextMockQuestion();
+            
+            // Re-enable buttons
+            submitBtn.disabled = false;
+            skipBtn.disabled = false;
+            skipBtn.innerHTML = '<i class="fas fa-forward me-2"></i>Skip Question';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('Error skipping question', 'error');
+        submitBtn.disabled = false;
+        skipBtn.disabled = false;
+        skipBtn.innerHTML = '<i class="fas fa-forward me-2"></i>Skip Question';
+    });
+}
+
+function updateProgress() {
+    document.getElementById('questions-answered').textContent = questionsAnswered;
+    
+    // Update progress bar (assume max 20 questions for 30 minutes)
+    const maxQuestions = 20;
+    const progressPercentage = Math.min((questionsAnswered / maxQuestions) * 100, 100);
+    document.getElementById('progress-bar').style.width = progressPercentage + '%';
+}
+
+function endInterview() {
+    if (confirm('Are you sure you want to end the interview? Your progress will be saved.')) {
+        clearInterval(timerInterval);
+        
+        // Show completion state
+        document.getElementById('interview-container').style.display = 'none';
+        document.getElementById('complete-state').style.display = 'block';
+        
+        // Submit final results
+        fetch('/mock/end', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Redirect to results page after a delay
+                setTimeout(() => {
+                    window.location.href = '/mock/results';
+                }, 2000);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            setTimeout(() => {
+                window.location.href = '/mock/results';
+            }, 2000);
+        });
+    }
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Ctrl+Enter to submit
+    if (e.ctrlKey && e.key === 'Enter') {
+        submitAnswer();
+    }
+    
+    // Ctrl+S to skip (prevent default save)
+    if (e.ctrlKey && e.key === 's') {
+        e.preventDefault();
+        skipQuestion();
+    }
+});
+
+// Prevent leaving page accidentally
+window.addEventListener('beforeunload', function(e) {
+    if (timerInterval) {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+    }
+});
+</script>
+{% endblock %}

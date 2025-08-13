@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Web-Inter-Prep{% endblock %}
+
+{% block content %}
+<div class="hero-section bg-gradient-primary text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">Master Your Interview Skills</h1>
+                <p class="lead mb-4">
+                    Practice with AI-powered interviews, track your progress, and land your dream job with confidence.
+                </p>
+                {% if not session.user_id %}
+                <div class="d-flex gap-3">
+                    <a href="{{ url_for('register') }}" class="btn btn-light btn-lg">
+                        <i class="fas fa-rocket me-2"></i>Get Started
+                    </a>
+                    <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-info-circle me-2"></i>Learn More
+                    </a>
+                </div>
+                {% else %}
+                <a href="{{ url_for('dashboard') }}" class="btn btn-light btn-lg">
+                    <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
+                </a>
+                {% endif %}
+            </div>
+            <div class="col-lg-6 text-center">
+                <div class="ai-illustration">
+                    <div class="ai-figure">
+                        <div class="ai-head"></div>
+                        <div class="ai-body"></div>
+                        <div class="ai-legs"></div>
+                    </div>
+                    <div class="speech-bubble">
+                        <span>Hello!</span>
+                    </div>
+                    <div class="ai-interview-box">
+                        <span>AI Interview</span>
+                    </div>
+                    <div class="floating-elements">
+                        <div class="circle circle-1"></div>
+                        <div class="circle circle-2"></div>
+                        <div class="circle circle-3"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-code text-primary display-4 mb-3"></i>
+                    <h5 class="card-title">Technical Questions</h5>
+                    <p class="card-text">Practice coding problems, system design, and technical concepts across various programming languages and frameworks.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-comments text-success display-4 mb-3"></i>
+                    <h5 class="card-title">Behavioral Questions</h5>
+                    <p class="card-text">Prepare for leadership, teamwork, and situational questions using the STAR method and best practices.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-chart-line text-info display-4 mb-3"></i>
+                    <h5 class="card-title">Progress Tracking</h5>
+                    <p class="card-text">Monitor your improvement with detailed analytics, identify weak areas, and celebrate achievements.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="bg-light py-5">
+    <div class="container text-center">
+        <h2 class="mb-4">Why Choose Web Inter Prep?</h2>
+        <div class="blue-underline mb-4"></div>
+        <p class="lead mb-4">Join thousands of candidates who have successfully prepared using our platform.</p>
+        {% if not session.user_id %}
+        <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">
+            <i class="fas fa-user-plus me-2"></i>Create Free Account
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
