@@ -4,6 +4,8 @@ Main Flask Application File
 """
 
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from authlib.integrations.flask_client import OAuth
+from dotenv import load_dotenv
 import sqlite3
 import json
 import os
@@ -11,8 +13,23 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 import random
 
-app = Flask(__name__)
+load_dotenv()
+app = Flask(__name__, template_folder="../frontend/templates", static_folder="../frontend/static")
 app.secret_key = 'your-secret-key-change-in-production'  # Change this in production
+
+# OAuth configuration (Google)
+oauth = OAuth(app)
+app.config['GOOGLE_CLIENT_ID'] = os.environ.get('GOOGLE_CLIENT_ID', '')
+app.config['GOOGLE_CLIENT_SECRET'] = os.environ.get('GOOGLE_CLIENT_SECRET', '')
+
+if app.config['GOOGLE_CLIENT_ID'] and app.config['GOOGLE_CLIENT_SECRET']:
+    oauth.register(
+        name='google',
+        client_id=app.config['GOOGLE_CLIENT_ID'],
+        client_secret=app.config['GOOGLE_CLIENT_SECRET'],
+        server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+        client_kwargs={'scope': 'openid email profile'}
+    )
 
 # Database initialization
 def init_db():
@@ -126,6 +143,58 @@ def register():
             flash('Email already exists', 'error')
     
     return render_template('register.html')
+
+@app.route('/login/google')
+def login_google():
+    """Redirect user to Google OAuth"""
+    if 'google' not in oauth._clients:
+        flash('Google Sign-In not configured on server', 'error')
+        return redirect(url_for('login'))
+    redirect_uri = url_for('auth_google_callback', _external=True)
+    return oauth.google.authorize_redirect(redirect_uri)
+
+@app.route('/auth/google/callback')
+def auth_google_callback():
+    """Google OAuth callback handler"""
+    if 'google' not in oauth._clients:
+        flash('Google Sign-In not configured on server', 'error')
+        return redirect(url_for('login'))
+    # Handle error or missing code gracefully
+    if 'error' in request.args:
+        flash(request.args.get('error_description', request.args.get('error', 'Google sign-in cancelled')), 'error')
+        return redirect(url_for('login'))
+    if 'code' not in request.args:
+        flash('Invalid OAuth response. Please try signing in again.', 'error')
+        return redirect(url_for('login'))
+
+    token = oauth.google.authorize_access_token()
+    userinfo = token.get('userinfo') or oauth.google.parse_id_token(token)
+    if not userinfo:
+        flash('Failed to fetch profile from Google', 'error')
+        return redirect(url_for('login'))
+
+    email = userinfo.get('email')
+    name = userinfo.get('name') or email.split('@')[0]
+
+    # Ensure local user exists
+    conn = sqlite3.connect('interview_prep.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT id, name FROM users WHERE email = ?', (email,))
+    row = cursor.fetchone()
+    if not row:
+        cursor.execute('INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)',
+                       (name, email, 'google-oauth'))
+        conn.commit()
+        user_id = cursor.lastrowid
+        user_name = name
+    else:
+        user_id, user_name = row[0], row[1]
+    conn.close()
+
+    session['user_id'] = user_id
+    session['user_name'] = user_name
+    flash('Logged in with Google', 'success')
+    return redirect(url_for('dashboard'))
 
 @app.route('/dashboard')
 def dashboard():
