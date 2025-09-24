@@ -6,6 +6,7 @@ Main Flask Application File
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
+import requests
 import sqlite3
 import json
 import os
@@ -21,6 +22,7 @@ app.secret_key = 'your-secret-key-change-in-production'  # Change this in produc
 oauth = OAuth(app)
 app.config['GOOGLE_CLIENT_ID'] = os.environ.get('GOOGLE_CLIENT_ID', '')
 app.config['GOOGLE_CLIENT_SECRET'] = os.environ.get('GOOGLE_CLIENT_SECRET', '')
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 
 if app.config['GOOGLE_CLIENT_ID'] and app.config['GOOGLE_CLIENT_SECRET']:
     oauth.register(
@@ -94,6 +96,107 @@ def features():
 def career_roadmap():
     """Career Roadmap Generator page"""
     return render_template('career_roadmap.html')
+
+@app.route('/api/roadmap', methods=['POST'])
+def api_roadmap():
+    """Generate a career roadmap using Gemini API.
+    Expects JSON: { jobRole, experience, targetCompany, skills }
+    Returns: { html }
+    """
+    data = request.get_json(force=True, silent=True) or {}
+    job_role = data.get('jobRole', '')
+    experience = data.get('experience', '')
+    target_company = data.get('targetCompany', '')
+    skills = data.get('skills', '')
+
+    if not GEMINI_API_KEY:
+        return jsonify({'error': 'GEMINI_API_KEY not configured on server'}), 500
+
+    prompt = (
+        f"Create a concise, step-by-step career roadmap for role: {job_role}, "
+        f"experience: {experience}, target company: {target_company}. "
+        f"Candidate skills: {skills}. "
+        "Return three stages (Foundational, Intermediate, Advanced). For each stage, provide: "
+        "Key Milestones (3-5 bullets), Skills to Focus (3-5 tags), Recommended Resources (2-3 bullets). "
+        "Use short bullet points."
+    )
+
+    try:
+        resp = requests.post(
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+            headers={
+                'Content-Type': 'application/json',
+                'X-goog-api-key': GEMINI_API_KEY,
+            },
+            json={
+                'contents': [
+                    {
+                        'parts': [
+                            {'text': prompt}
+                        ]
+                    }
+                ]
+            },
+            timeout=20
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        text = ''
+        try:
+            text = data['candidates'][0]['content']['parts'][0]['text']
+        except Exception:
+            text = str(data)
+        # Convert basic markdown (* bullets and headings) to HTML cards
+        lines = [ln.strip() for ln in text.split('\n')]
+        cards = []
+        current = []
+        current_title = 'Roadmap'
+        def flush():
+            if not current:
+                return
+            # Build HTML with bullet conversion
+            html_parts = []
+            in_ul = False
+            for ln in current:
+                if ln.startswith('* '):
+                    if not in_ul:
+                        html_parts.append('<ul class="mb-2">')
+                        in_ul = True
+                    html_parts.append('<li>' + ln[2:].strip() + '</li>')
+                else:
+                    if in_ul:
+                        html_parts.append('</ul>')
+                        in_ul = False
+                    if ln:
+                        html_parts.append('<p class="mb-2">' + ln.replace('**','') + '</p>')
+            if in_ul:
+                html_parts.append('</ul>')
+            cards.append(
+                '<div class="stage-card card shadow-sm border-0 mb-3">'
+                f'  <div class="card-header bg-dark text-white fw-semibold">{current_title}</div>'
+                '  <div class="card-body">' + ''.join(html_parts) + '</div>'
+                '</div>'
+            )
+            current.clear()
+        # Heuristic: split by headings that don’t start with *
+        for ln in lines:
+            if ln and not ln.startswith('* ') and (ln.lower().startswith('foundational') or ln.lower().startswith('intermediate') or ln.lower().startswith('advanced')):
+                flush()
+                current_title = ln.replace('**','')
+            else:
+                current.append(ln)
+        flush()
+        html = (
+            '<div class="ai-roadmap">'
+            '<div class="alert alert-info mb-3"><i class="fas fa-wand-magic me-2"></i><strong>Generated with Gemini</strong></div>'
+            + ''.join(cards) +
+            '</div>'
+        )
+        return jsonify({'html': html})
+    except requests.HTTPError as e:
+        return jsonify({'error': f'Gemini API error: {e.response.text[:300]}' }), 502
+    except Exception as e:
+        return jsonify({'error': f'Unexpected error: {e}'}), 500
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():

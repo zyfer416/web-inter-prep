@@ -124,188 +124,40 @@ function generateRoadmap() {
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating...';
     submitBtn.disabled = true;
     
-    // Simulate AI processing time
-    setTimeout(() => {
-        displayRoadmap(jobRole, experience, targetCompany, skills);
+    // Call backend (Gemini)
+    fetch('/api/roadmap', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobRole, experience, targetCompany, skills })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) {
+            alert(data.error);
+            return;
+        }
+        const roadmapOutput = document.getElementById('roadmapOutput');
+        const roadmapStages = document.getElementById('roadmapStages');
+        roadmapStages.innerHTML = data.html;
+        roadmapOutput.style.display = 'block';
+        roadmapOutput.scrollIntoView({ behavior: 'smooth' });
+    })
+    .catch(err => {
+        alert('Failed to generate roadmap. Please try again.');
+        console.error(err);
+    })
+    .finally(() => {
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
-    }, 2000);
+    });
 }
-
-function displayRoadmap(jobRole, experience, targetCompany, skills) {
-    const roadmapOutput = document.getElementById('roadmapOutput');
-    const roadmapStages = document.getElementById('roadmapStages');
-    
-    // Generate roadmap based on inputs
-    const roadmap = generateRoadmapContent(jobRole, experience, targetCompany, skills);
-    
-    roadmapStages.innerHTML = roadmap;
-    roadmapOutput.style.display = 'block';
-    
-    // Smooth scroll to output
-    roadmapOutput.scrollIntoView({ behavior: 'smooth' });
-}
-
-function generateRoadmapContent(jobRole, experience, targetCompany, skills) {
-    const roleDisplay = document.getElementById('jobRole').options[document.getElementById('jobRole').selectedIndex].text;
-    const companyDisplay = targetCompany === 'any' ? 'General Industry' : document.getElementById('targetCompany').options[document.getElementById('targetCompany').selectedIndex].text;
-    
-    let roadmapHTML = `
-        <div class="alert alert-info mb-4">
-            <h6 class="mb-2"><i class="fas fa-info-circle me-2"></i>Generated for: <strong>${roleDisplay}</strong> at <strong>${companyDisplay}</strong></h6>
-            <p class="mb-0">Key Skills: <strong>${skills}</strong></p>
-        </div>
-    `;
-    
-    // Stage 1: Foundational Skills
-    roadmapHTML += `
-        <div class="roadmap-stage mb-4">
-            <div class="stage-header bg-primary text-white p-3 rounded-top">
-                <h5 class="mb-0"><i class="fas fa-rocket me-2"></i>Stage 1: Foundational Skills</h5>
-                <small class="opacity-75">Estimated Duration: 0-3 Months</small>
-            </div>
-            <div class="stage-content border border-top-0 p-4 rounded-bottom">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h6 class="text-primary mb-3">Key Milestones</h6>
-                        <div class="milestone-item border border-success rounded p-3 mb-3">
-                            <h6 class="text-success mb-2"><i class="fas fa-check-circle me-2"></i>Master Core Language</h6>
-                            <ul class="mb-0">
-                                <li>Complete intro course</li>
-                                <li>Build 3 small projects</li>
-                            </ul>
-                        </div>
-                        <div class="milestone-item border border-success rounded p-3">
-                            <h6 class="text-success mb-2"><i class="fas fa-check-circle me-2"></i>Understand Data Structures</h6>
-                            <ul class="mb-0">
-                                <li>Implement common DS (Arrays, Lists, Stacks, Queues)</li>
-                                <li>Solve 20 easy DS problems</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <h6 class="text-primary mb-3">Skills to Focus On</h6>
-                        <div class="d-flex flex-wrap gap-2 mb-3">
-                            <span class="badge bg-success">Core Programming Language</span>
-                            <span class="badge bg-info">Basic Data Structures</span>
-                            <span class="badge bg-success">Problem Solving</span>
-                        </div>
-                        <h6 class="text-primary mb-3">Recommended Resources</h6>
-                        <ul class="list-unstyled">
-                            <li><i class="fas fa-link me-2 text-primary"></i>Online Course Platform (e.g., Coursera, Udemy)</li>
-                            <li><i class="fas fa-link me-2 text-primary"></i>Practice Website (e.g., LeetCode Easy)</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // Stage 2: Intermediate Skills
-    roadmapHTML += `
-        <div class="roadmap-stage mb-4">
-            <div class="stage-header bg-success text-white p-3 rounded-top">
-                <h5 class="mb-0"><i class="fas fa-layer-group me-2"></i>Stage 2: Intermediate Skills</h5>
-                <small class="opacity-75">Estimated Duration: 3-6 Months</small>
-            </div>
-            <div class="stage-content border border-top-0 p-4 rounded-bottom">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h6 class="text-success mb-3">Key Milestones</h6>
-                        <div class="milestone-item border border-success rounded p-3 mb-3">
-                            <h6 class="text-success mb-2"><i class="fas fa-check-circle me-2"></i>Advanced Algorithms</h6>
-                            <ul class="mb-0">
-                                <li>Master sorting algorithms</li>
-                                <li>Learn graph algorithms</li>
-                            </ul>
-                        </div>
-                        <div class="milestone-item border border-success rounded p-3">
-                            <h6 class="text-success mb-2"><i class="fas fa-check-circle me-2"></i>Framework Mastery</h6>
-                            <ul class="mb-0">
-                                <li>Build 2-3 medium projects</li>
-                                <li>Learn testing frameworks</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <h6 class="text-success mb-3">Skills to Focus On</h6>
-                        <div class="d-flex flex-wrap gap-2 mb-3">
-                            <span class="badge bg-success">Advanced Algorithms</span>
-                            <span class="badge bg-warning">Framework Knowledge</span>
-                            <span class="badge bg-info">Testing & Debugging</span>
-                        </div>
-                        <h6 class="text-success mb-3">Recommended Resources</h6>
-                        <ul class="list-unstyled">
-                            <li><i class="fas fa-link me-2 text-success"></i>Advanced Algorithm Courses</li>
-                            <li><i class="fas fa-link me-2 text-success"></i>Open Source Projects</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // Stage 3: Advanced Skills
-    roadmapHTML += `
-        <div class="roadmap-stage mb-4">
-            <div class="stage-header bg-warning text-dark p-3 rounded-top">
-                <h5 class="mb-0"><i class="fas fa-crown me-2"></i>Stage 3: Advanced Skills</h5>
-                <small class="opacity-75">Estimated Duration: 6-12 Months</small>
-            </div>
-            <div class="stage-content border border-top-0 p-4 rounded-bottom">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h6 class="text-warning mb-3">Key Milestones</h6>
-                        <div class="milestone-item border border-warning rounded p-3 mb-3">
-                            <h6 class="text-warning mb-2"><i class="fas fa-star me-2"></i>System Design</h6>
-                            <ul class="mb-0">
-                                <li>Learn distributed systems</li>
-                                <li>Practice system design interviews</li>
-                            </ul>
-                        </div>
-                        <div class="milestone-item border border-warning rounded p-3">
-                            <h6 class="text-warning mb-2"><i class="fas fa-star me-2"></i>Leadership Skills</h6>
-                            <ul class="mb-0">
-                                <li>Mentor junior developers</li>
-                                <li>Lead technical discussions</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <h6 class="text-warning mb-3">Skills to Focus On</h6>
-                        <div class="d-flex flex-wrap gap-2 mb-3">
-                            <span class="badge bg-warning">System Design</span>
-                            <span class="badge bg-danger">Leadership</span>
-                            <span class="badge bg-primary">Architecture</span>
-                        </div>
-                        <h6 class="text-warning mb-3">Recommended Resources</h6>
-                        <ul class="list-unstyled">
-                            <li><i class="fas fa-link me-2 text-warning"></i>System Design Courses</li>
-                            <li><i class="fas fa-link me-2 text-warning"></i>Leadership Workshops</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // Final call-to-action
-    roadmapHTML += `
-        <div class="text-center mt-5">
-            <div class="alert alert-success">
-                <h5><i class="fas fa-lightbulb me-2"></i>Ready to Start Your Journey?</h5>
-                <p class="mb-3">Follow this roadmap step by step to achieve your career goals!</p>
-                <a href="/practice" class="btn btn-success me-2">
-                    <i class="fas fa-code me-2"></i>Start Practicing
-                </a>
-                <a href="/resources" class="btn btn-outline-success">
-                    <i class="fas fa-book me-2"></i>Browse Resources
-                </a>
-            </div>
-        </div>
-    `;
-    
-    return roadmapHTML;
-}
+// Client-side generator removed in favor of server API
 </script>
+<style>
+.ai-roadmap .stage-card .card-header{background:linear-gradient(90deg,#0d6efd,#6610f2)}
+.ai-roadmap .stage-card .card-body{background:#0f1620;color:#e6edf3;border-radius:.25rem}
+.ai-roadmap .stage-card ul{margin:0 0 .5rem 1rem}
+.ai-roadmap .stage-card li{margin-bottom:.25rem}
+.ai-roadmap .stage-card p{margin-bottom:.5rem}
+</style>
 {% endblock %} 
