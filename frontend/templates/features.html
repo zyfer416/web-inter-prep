@@ -31,9 +31,10 @@
                     <i class="fas fa-robot text-primary display-4 mb-3"></i>
                     <h5 class="card-title">AI Interview</h5>
                     <p class="card-text">Experience realistic interview simulations with our AI-powered system. Practice with intelligent questions and get instant feedback.</p>
-                    <button class="btn btn-primary" onclick="showComingSoon('AI Interview')" disabled>
-                        <i class="fas fa-clock me-2"></i>Coming Soon
-                    </button>
+                    <a href="{{ url_for('mock_interview') if session.user_id else url_for('login') }}" class="btn btn-primary">
+   <i class="fas fa-robot me-2"></i>Try AI Interview
+</a>
+
                 </div>
             </div>
         </div>
@@ -50,17 +51,18 @@
             </div>
         </div>
         <div class="col-lg-4 mb-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body text-center">
-                    <i class="fas fa-building text-info display-4 mb-3"></i>
-                    <h5 class="card-title">Company Prep</h5>
-                    <p class="card-text">Get company-specific interview preparation materials. Learn about different company cultures and interview processes.</p>
-                    <button class="btn btn-info" onclick="showComingSoon('Company Prep')" disabled>
-                        <i class="fas fa-clock me-2"></i>Coming Soon
-                    </button>
-                </div>
-            </div>
-        </div>
+  <div class="card h-100 shadow-sm">
+    <div class="card-body text-center">
+      <i class="fas fa-building text-info display-4 mb-3"></i>
+      <h5 class="card-title">Company Prep</h5>
+      <p class="card-text">Get company-specific interview preparation materials. Learn about different company cultures and interview processes.</p>
+      <a class="btn btn-primary" href="{{ url_for('custom_practice') }}">
+        <i class="fas fa-arrow-right me-2"></i>Open
+      </a>
+    </div>
+  </div>
+</div>
+
     </div>
 
     <div class="row">

@@ -187,6 +187,12 @@
 
 {% block extra_js %}
 <script>
+
+console.log('mock_interview.html: script block included');
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('mock_interview.html: DOMContentLoaded fired');
+});
+
 // Mock interview JavaScript
 let currentQuestion = null;
 let questionsAnswered = 0;
@@ -236,25 +242,19 @@ function startTimer(durationMinutes) {
 }
 
 function loadNextMockQuestion() {
-    fetch('/mock/question')
-    .then(response => response.json())
-    .then(data => {
-        if (data.question) {
-            currentQuestion = data.question;
-            displayMockQuestion(data.question);
-            
-            // Hide loading, show interview
-            document.getElementById('loading-state').style.display = 'none';
-            document.getElementById('interview-container').style.display = 'block';
-        } else {
-            showMessage('Failed to load question', 'error');
-        }
+  console.log('mock_interview.html: calling /mock/question');
+  fetch('/mock/question')
+    .then(r => {
+      console.log('mock_interview.html: response status', r.status);
+      return r.json();
     })
-    .catch(error => {
-        console.error('Error:', error);
-        showMessage('Error loading question', 'error');
-    });
+    .then(data => {
+      console.log('mock_interview.html: data', data);
+      // ... existing code
+    })
+    .catch(err => console.error('mock_interview.html: fetch error', err));
 }
+
 
 function displayMockQuestion(question) {
     const questionDisplay = document.getElementById('question-display');

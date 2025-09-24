@@ -472,3 +472,32 @@ function formatDuration(seconds) {
         return `${secs}s`;
     }
 }
+
+function loadMockQuestion() {
+    showSpinner();
+    fetch('/mock/question')
+        .then(response => response.json())
+        .then(data => {
+            hideSpinner();
+            if (data.question) {
+                currentQuestion = data.question;
+                displayQuestion(data.question);
+            } else if (data.error) {
+                showMessage(data.error, 'error');
+            } else {
+                showMessage('No questions available.', 'info');
+            }
+        })
+        .catch(error => {
+            hideSpinner();
+            console.error('Error:', error);
+            showMessage('Failed to load question. Please try again.', 'error');
+        });
+}
+
+// // At the end of your JS file
+// if (window.location.pathname === '/mock') {
+//     document.addEventListener('DOMContentLoaded', function() {
+//         loadMockQuestion();
+//     });
+// }

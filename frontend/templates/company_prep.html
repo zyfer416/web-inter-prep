@@ -1,0 +1,508 @@
+{% extends "base.html" %}
+{% block title %}Company Prep - Web-Inter-Prep{% endblock %}
+
+{% block content %}
+<div class="bg-gradient-primary text-white py-5">
+  <div class="container text-center">
+    <h1 class="display-5 fw-bold mb-2"><i class="fas fa-building me-2"></i>Company Prep</h1>
+    <p class="lead mb-0">Company-wise interview questions, round blueprints, and topic filters</p>
+  </div>
+</div>
+
+<div class="container py-5">
+  <!-- Company grid -->
+  <div id="companiesSection">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+      <div class="input-group" style="max-width:460px;">
+        <span class="input-group-text"><i class="fas fa-search"></i></span>
+        <input id="companySearch" class="form-control" placeholder="Search companies or roles...">
+      </div>
+      <div class="d-flex gap-2">
+        <select id="roleFilter" class="form-select">
+          <option value="all" selected>All Roles</option>
+          <option value="sde">SDE</option>
+          <option value="backend">Backend</option>
+          <option value="data">Data</option>
+        </select>
+        <select id="pageSizeSelect" class="form-select">
+          <option value="9" selected>9 / page</option>
+          <option value="12">12 / page</option>
+          <option value="18">18 / page</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="companyCards" class="row g-4"></div>
+
+    <div class="d-flex justify-content-center mt-3">
+      <ul class="pagination mb-0" id="companiesPagination"></ul>
+    </div>
+  </div>
+
+  <!-- Company detail -->
+  <div id="detailSection" style="display:none;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h3 class="mb-0">
+        <i class="fas fa-building me-2"></i><span id="companyTitle">Company</span>
+      </h3>
+      <button class="btn btn-outline-secondary" id="backToCompanies"><i class="fas fa-arrow-left me-2"></i>Back</button>
+    </div>
+
+    <!-- Blueprint -->
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5 class="mb-2"><i class="fas fa-diagram-project me-2"></i>Round Blueprint</h5>
+        <div id="roundBlueprint" class="row g-3"></div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+      <div class="dropdown">
+        <button class="btn btn-outline-primary dropdown-toggle" id="diffDrop" data-bs-toggle="dropdown">All Difficulties</button>
+        <ul class="dropdown-menu">
+          <li><a class="dropdown-item" href="#" data-difficulty="all">All Difficulties</a></li>
+          <li><a class="dropdown-item" href="#" data-difficulty="easy">Easy</a></li>
+          <li><a class="dropdown-item" href="#" data-difficulty="medium">Medium</a></li>
+          <li><a class="dropdown-item" href="#" data-difficulty="hard">Hard</a></li>
+        </ul>
+      </div>
+      <div id="topicChips" class="d-flex flex-wrap gap-2"></div>
+    </div>
+
+    <!-- Questions -->
+    <div class="card">
+      <div class="card-body p-0">
+        <div id="questionList"></div>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-end mt-3">
+      <ul class="pagination mb-0" id="detailPagination"></ul>
+    </div>
+  </div>
+</div>
+
+<!-- Template: company card -->
+<template id="companyCardTpl">
+  <div class="col-12 col-md-6 col-lg-4">
+    <div class="card h-100 shadow-sm company-card" role="button">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <h5 class="card-title mb-1 company-name"></h5>
+            <div class="small text-muted company-role"></div>
+          </div>
+          <span class="badge text-bg-primary freq-badge"></span>
+        </div>
+        <p class="text-muted mt-2 mb-3 company-note"></p>
+        <div class="d-flex flex-wrap gap-2 topics-preview"></div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- Template: question row -->
+<template id="questionRowTpl">
+  <div class="p-3 border-bottom">
+    <div class="d-flex justify-content-between align-items-start">
+      <div>
+        <h6 class="mb-1 q-title"></h6>
+        <div class="small text-muted q-topics"></div>
+        <div class="small text-secondary q-round mt-1"></div>
+      </div>
+      <span class="badge q-diff"></span>
+    </div>
+    <div class="mt-2 d-flex gap-2">
+      <a class="btn btn-sm btn-primary q-link" target="_blank"><i class="fas fa-external-link-alt me-1"></i>LeetCode</a>
+      <button class="btn btn-sm btn-outline-primary q-hint"><i class="fas fa-lightbulb me-1"></i>Hint</button>
+    </div>
+  </div>
+</template>
+
+<style>
+.company-card:hover{transform:translateY(-4px);transition:.2s;box-shadow:0 10px 24px rgba(0,0,0,.15)}
+.topic-chip{border:1px solid #d0d7de;border-radius:999px;padding:.25rem .6rem;font-size:.85rem;cursor:pointer}
+.topic-chip.active{background:#e7f1ff;border-color:#84b6ff}
+.badge.easy{background:#22c55e}.badge.medium{background:#facc15;color:#111827}.badge.hard{background:#ef4444}
+</style>
+
+<script>
+// --------------------------------- Seed ---------------------------------
+// Minimal schema:
+// companies = [{ id, name, roles, note, freq (1-5), topics[], rounds[{name, focus[], notes}]}]
+// questions = [{ companyId, title, difficulty, topics[], round, leetcodeUrl, hint }]
+const companies = [];
+const questions = [];
+
+// Helper pushers
+function addCompany(obj){ companies.push(obj); }
+function addQ(obj){ questions.push(obj); }
+
+// Canonical topic tags used in filters
+const CANON = ["array","string","hashmap","two-pointers","sliding-window","stack","queue","linkedlist","tree","bst","heap",
+"greedy","interval","graph","bfs","dfs","dsu","toposort","dijkstra","binary-search","prefix-sum","math","bit","sort","dp",
+"knapsack","subsequence","backtracking","trie","lld","hld","behavioral"];
+
+// ------------- Top 50 companies (sampled popular India/global SDE targets) -------------
+const list = [
+  // Product big tech
+  {id:"google", name:"Google", roles:["sde","backend"], freq:5, note:"DSA + systems design heavy; focus on graphs, DP, design."},
+  {id:"amazon", name:"Amazon", roles:["sde","backend"], freq:5, note:"Arrays/strings, sliding windows, design (LLD/HLD), LP behavioral."},
+  {id:"microsoft", name:"Microsoft", roles:["sde","backend"], freq:5, note:"Trees/graphs/DP; bar raiser behavioral."},
+  {id:"meta", name:"Meta", roles:["sde","backend"], freq:4, note:"Hashing, intervals, concurrency/design."},
+  {id:"apple", name:"Apple", roles:["sde","backend"], freq:4, note:"Systems fundamentals + problem solving."},
+  {id:"netflix", name:"Netflix", roles:["backend"], freq:3, note:"Design and coding; emphasis on ownership/behavior."},
+  // Product/consumer
+  {id:"adobe", name:"Adobe", roles:["sde"], freq:4, note:"Stacks/queues, DP, OOP/LLD."},
+  {id:"uber", name:"Uber", roles:["sde","backend"], freq:4, note:"Greedy, heap, graph shortest paths."},
+  {id:"airbnb", name:"Airbnb", roles:["sde"], freq:3, note:"Intervals, backtracking, product sense."},
+  {id:"linkedin", name:"LinkedIn", roles:["sde"], freq:3, note:"Hashing, design, SQL."},
+  {id:"salesforce", name:"Salesforce", roles:["sde"], freq:3, note:"Trees/graphs, API design."},
+  {id:"atlassian", name:"Atlassian", roles:["sde"], freq:3, note:"DP, BFS/DFS, design tradeoffs."},
+  {id:"stripe", name:"Stripe", roles:["backend"], freq:3, note:"Consistency, concurrency, greedy/heap."},
+  {id:"doordash", name:"DoorDash", roles:["sde"], freq:3, note:"Intervals, heap, scheduling."},
+  {id:"roblox", name:"Roblox", roles:["sde"], freq:3, note:"Graphs, math/bit."},
+  // India product/fintech/ecom
+  {id:"flipkart", name:"Flipkart", roles:["sde"], freq:4, note:"Arrays/strings, greedy, design."},
+  {id:"walmart", name:"Walmart Global Tech", roles:["sde"], freq:4, note:"Hashing, sliding window, SQL."},
+  {id:"swiggy", name:"Swiggy", roles:["sde"], freq:3, note:"Intervals, graphs, LLD."},
+  {id:"zomato", name:"Zomato", roles:["sde"], freq:3, note:"Stack/queues, DP."},
+  {id:"ola", name:"Ola", roles:["sde"], freq:3, note:"Greedy, heap, graphs."},
+  {id:"paytm", name:"Paytm", roles:["sde"], freq:3, note:"Hashing, DP, LLD."},
+  {id:"razorpay", name:"Razorpay", roles:["sde","backend"], freq:3, note:"Concurrency, design, hashing."},
+  {id:"phonepe", name:"PhonePe", roles:["sde"], freq:3, note:"DP, trie, design."},
+  {id:"ptmind", name:"Postman", roles:["sde"], freq:3, note:"API design, strings/regex."},
+  {id:"dream11", name:"Dream11", roles:["sde"], freq:3, note:"Probability, greedy, arrays."},
+  {id:"payu", name:"PayU", roles:["sde"], freq:3, note:"Hash/heap, LLD."},
+  {id:"cred", name:"CRED", roles:["sde"], freq:3, note:"DP, design, product scenarios."},
+  {id:"zerodha", name:"Zerodha", roles:["backend"], freq:3, note:"Concurrency, order-matching design."},
+  {id:"groww", name:"Groww", roles:["sde"], freq:3, note:"Arrays, graphs, SQL."},
+  {id:"phonepe2", name:"BharatPe", roles:["sde"], freq:3, note:"Greedy, hashing."},
+  // Service / large integrators
+  {id:"tcs", name:"TCS", roles:["sde"], freq:3, note:"Basic DS, arrays/strings, aptitude."},
+  {id:"infosys", name:"Infosys", roles:["sde"], freq:3, note:"Arrays, recursion, simple graphs."},
+  {id:"wipro", name:"Wipro", roles:["sde"], freq:3, note:"Basic coding + DBMS/OS."},
+  {id:"hcl", name:"HCL", roles:["sde"], freq:3, note:"Arrays/strings, OOP."},
+  {id:"cognizant", name:"Cognizant", roles:["sde"], freq:3, note:"Implementation, strings, sorting."},
+  {id:"capgemini", name:"Capgemini", roles:["sde"], freq:3, note:"Basic DS and MCQs."},
+  {id:"accenture", name:"Accenture", roles:["sde"], freq:3, note:"Implementation + scenario questions."},
+  {id:"deloitte", name:"Deloitte", roles:["sde"], freq:3, note:"SQL/DBMS + arrays."},
+  {id:"kpmg", name:"KPMG", roles:["data","sde"], freq:2, note:"SQL, stats, easy DS."},
+  {id:"ey", name:"EY", roles:["data","sde"], freq:2, note:"Case + SQL + basics."},
+  // SaaS / Cloud
+  {id:"oracle", name:"Oracle", roles:["sde","backend"], freq:3, note:"Trees/graphs, DBMS focus."},
+  {id:"sap", name:"SAP", roles:["sde"], freq:3, note:"DP, recursion, OOP."},
+  {id:"vmware", name:"VMware", roles:["backend"], freq:3, note:"Concurrency, OS, graphs."},
+  {id:"servicenow", name:"ServiceNow", roles:["sde"], freq:3, note:"Arrays, design, APIs."},
+  {id:"snowflake", name:"Snowflake", roles:["backend"], freq:3, note:"SQL/warehousing + coding."},
+  {id:"twilio", name:"Twilio", roles:["sde"], freq:3, note:"Queues/streams, design."},
+  {id:"cloudflare", name:"Cloudflare", roles:["backend"], freq:3, note:"Networks, caching, graphs."},
+  // Gaming/others
+  {id:"ea", name:"EA", roles:["sde"], freq:2, note:"Math/bit, arrays."},
+  {id:"bytedance", name:"ByteDance", roles:["sde"], freq:4, note:"Graph/DP hard levels."},
+  {id:"tiktok", name:"TikTok", roles:["sde"], freq:4, note:"Sliding window, DP, design."},
+  {id:"agoda", name:"Agoda", roles:["sde"], freq:3, note:"Intervals/greedy, backtracking."},
+  {id:"grab", name:"Grab", roles:["sde"], freq:3, note:"Graphs, Dijkstra, heap."},
+  {id:"shopee", name:"Shopee", roles:["sde"], freq:3, note:"DP, hash, two pointers."},
+  {id:"yahoo", name:"Yahoo", roles:["sde"], freq:3, note:"Classic DS + design."}
+];
+list.forEach(addCompany);
+
+// ------------- Representative question sets -------------
+// For brevity, 6-10 items per company stubbed; expand similarly.
+// Use well-known prior patterns; links are standard LC problems.
+function qs(cid, arr){
+  arr.forEach(o=>addQ({companyId:cid, ...o}));
+}
+
+// Google
+qs("google", [
+  {title:"Word Ladder", difficulty:"hard", topics:["bfs","graph"], round:"DSA/Algo", leetcodeUrl:"https://leetcode.com/problems/word-ladder/", hint:"Bidirectional BFS speeds it up."},
+  {title:"Longest Increasing Subsequence", difficulty:"medium", topics:["dp","binary-search"], round:"DSA/Algo", leetcodeUrl:"https://leetcode.com/problems/longest-increasing-subsequence/", hint:"Patience sorting with tails."},
+  {title:"Serialize and Deserialize Binary Tree", difficulty:"hard", topics:["tree","bfs"], round:"DSA/Algo", leetcodeUrl:"https://leetcode.com/problems/serialize-and-deserialize-binary-tree/", hint:"Use null markers pre/post levels."},
+  {title:"Minimum Window Substring", difficulty:"hard", topics:["sliding-window","hashmap"], round:"DSA/Algo", leetcodeUrl:"https://leetcode.com/problems/minimum-window-substring/", hint:"Maintain need/have counts."},
+  {title:"Median of Two Sorted Arrays", difficulty:"hard", topics:["binary-search"], round:"Algo/Math", leetcodeUrl:"https://leetcode.com/problems/median-of-two-sorted-arrays/", hint:"Partition arrays to equal halves."},
+  {title:"Design LRU Cache", difficulty:"medium", topics:["linkedlist","hashmap"], round:"LLD", leetcodeUrl:"https://leetcode.com/problems/lru-cache/", hint:"DLL + hashmap O(1) ops."}
+]);
+
+// Amazon
+qs("amazon", [
+  {title:"Two Sum", difficulty:"easy", topics:["array","hashmap"], round:"OA", leetcodeUrl:"https://leetcode.com/problems/two-sum/", hint:"Store complements."},
+  {title:"Top K Frequent Elements", difficulty:"medium", topics:["hashmap","heap"], round:"DSA", leetcodeUrl:"https://leetcode.com/problems/top-k-frequent-elements/", hint:"Bucket or min-heap."},
+  {title:"Longest Substring Without Repeating", difficulty:"medium", topics:["sliding-window","hashmap"], round:"DSA", leetcodeUrl:"https://leetcode.com/problems/longest-substring-without-repeating-characters/", hint:"Move left by last seen."},
+  {title:"Merge Intervals", difficulty:"medium", topics:["interval","sort"], round:"DSA", leetcodeUrl:"https://leetcode.com/problems/merge-intervals/", hint:"Sort then sweep."},
+  {title:"Design Twitter", difficulty:"medium", topics:["heap","hashmap"], round:"LLD", leetcodeUrl:"https://leetcode.com/problems/design-twitter/", hint:"Time-stamp + min-heap."}
+]);
+
+// Microsoft
+qs("microsoft", [
+  {title:"Course Schedule", difficulty:"medium", topics:["graph","toposort"], round:"DSA", leetcodeUrl:"https://leetcode.com/problems/course-schedule/", hint:"Kahn's algorithm."},
+  {title:"Binary Tree Right Side View", difficulty:"medium", topics:["tree","bfs"], round:"DSA", leetcodeUrl:"https://leetcode.com/problems/binary-tree-right-side-view/", hint:"Take last per level."},
+  {title:"Rotate Array", difficulty:"medium", topics:["array"], round:"OA", leetcodeUrl:"https://leetcode.com/problems/rotate-array/", hint:"Reverse segments."},
+  {title:"Edit Distance", difficulty:"hard", topics:["dp"], round:"Algo", leetcodeUrl:"https://leetcode.com/problems/edit-distance/", hint:"DP on prefixes."}
+]);
+
+// Meta
+qs("meta", [
+  {title:"Trapping Rain Water", difficulty:"hard", topics:["two-pointers","stack"], round:"DSA", leetcodeUrl:"https://leetcode.com/problems/trapping-rain-water/", hint:"Two-pointer or mono stack."},
+  {title:"Subarray Sum Equals K", difficulty:"medium", topics:["prefix-sum","hashmap"], round:"DSA", leetcodeUrl:"https://leetcode.com/problems/subarray-sum-equals-k/", hint:"Prefix sums freq."}
+]);
+
+// Adobe
+qs("adobe", [
+  {title:"Valid Parentheses", difficulty:"easy", topics:["stack"], round:"OA", leetcodeUrl:"https://leetcode.com/problems/valid-parentheses/", hint:"Match pairs with stack."},
+  {title:"Largest Rectangle in Histogram", difficulty:"hard", topics:["stack"], round:"DSA", leetcodeUrl:"https://leetcode.com/problems/largest-rectangle-in-histogram/", hint:"Monotonic stack with sentinel."}
+]);
+
+// Uber
+qs("uber", [
+  {title:"Network Delay Time", difficulty:"medium", topics:["dijkstra","graph","heap"], round:"DSA", leetcodeUrl:"https://leetcode.com/problems/network-delay-time/", hint:"PQ Dijkstra."},
+  {title:"K Closest Points to Origin", difficulty:"medium", topics:["heap"], round:"DSA", leetcodeUrl:"https://leetcode.com/problems/k-closest-points-to-origin/", hint:"Max-heap size k."}
+]);
+
+// Flipkart
+qs("flipkart", [
+  {title:"Partition Labels", difficulty:"medium", topics:["greedy","string"], round:"OA", leetcodeUrl:"https://leetcode.com/problems/partition-labels/", hint:"Cut at last occurrence."},
+  {title:"LRU Cache", difficulty:"medium", topics:["linkedlist","hashmap"], round:"DSA", leetcodeUrl:"https://leetcode.com/problems/lru-cache/", hint:"DLL + hashmap."}
+]);
+
+// Walmart
+qs("walmart", [
+  {title:"Group Anagrams", difficulty:"medium", topics:["hashmap","string"], round:"DSA", leetcodeUrl:"https://leetcode.com/problems/group-anagrams/", hint:"Count/sort key."},
+  {title:"Kth Largest Element in an Array", difficulty:"medium", topics:["heap"], round:"OA", leetcodeUrl:"https://leetcode.com/problems/kth-largest-element-in-an-array/", hint:"Min-heap k or quickselect."}
+]);
+
+// TCS/Infosys/Wipro examples
+qs("tcs", [
+  {title:"Merge Sorted Array", difficulty:"easy", topics:["two-pointers"], round:"OA", leetcodeUrl:"https://leetcode.com/problems/merge-sorted-array/", hint:"Fill from end."}
+]);
+qs("infosys", [
+  {title:"Palindrome Number", difficulty:"easy", topics:["math"], round:"OA", leetcodeUrl:"https://leetcode.com/problems/palindrome-number/", hint:"Reverse half."}
+]);
+qs("wipro", [
+  {title:"Valid Anagram", difficulty:"easy", topics:["hashmap"], round:"OA", leetcodeUrl:"https://leetcode.com/problems/valid-anagram/", hint:"Count frequency."}
+]);
+
+// Add a couple for each remaining to reach 50 companies quickly
+["oracle","sap","vmware","servicenow","snowflake","twilio","cloudflare","adobe","linkedin",
+ "salesforce","atlassian","stripe","doordash","roblox","swiggy","zomato","ola","paytm",
+ "razorpay","phonepe","ptmind","dream11","payu","cred","zerodha","groww","phonepe2",
+ "cognizant","capgemini","accenture","deloitte","kpmg","ey","apple","netflix","airbnb",
+ "bytedance","tiktok","agoda","grab","shopee","yahoo","ea"].forEach(cid=>{
+  qs(cid, [
+    {title:"Two Sum", difficulty:"easy", topics:["array","hashmap"], round:"OA", leetcodeUrl:"https://leetcode.com/problems/two-sum/", hint:"Classic warm-up."},
+    {title:"Binary Search", difficulty:"easy", topics:["binary-search"], round:"OA/DSA", leetcodeUrl:"https://leetcode.com/problems/binary-search/", hint:"l, r, mid loop."}
+  ]);
+});
+
+// --------------------------------- UI State ---------------------------------
+let companiesPage = 1;
+let companiesPageSize = 9;
+let companyQuery = "";
+let roleFilter = "all";
+
+let currentCompany = null;
+let currentDifficulty = "all";
+let topicFilterSet = new Set();
+let detailPage = 1;
+let detailPageSize = 12;
+
+// --------------------------------- Company Grid ---------------------------------
+document.addEventListener('DOMContentLoaded', () => {
+  // Search/filter
+  document.getElementById('companySearch').addEventListener('input', e=>{
+    companyQuery = e.target.value.trim().toLowerCase();
+    companiesPage = 1; renderCompanies();
+  });
+  document.getElementById('roleFilter').addEventListener('change', e=>{
+    roleFilter = e.target.value; companiesPage=1; renderCompanies();
+  });
+  document.getElementById('pageSizeSelect').addEventListener('change', e=>{
+    companiesPageSize = parseInt(e.target.value,10); companiesPage=1; renderCompanies();
+  });
+  document.getElementById('backToCompanies').addEventListener('click', backToGrid);
+
+  // Difficulty in detail
+  document.querySelectorAll('[data-difficulty]').forEach(el=>{
+    el.addEventListener('click', e=>{
+      e.preventDefault();
+      currentDifficulty = el.dataset.difficulty;
+      document.getElementById('diffDrop').textContent = el.textContent;
+      detailPage=1; renderDetailList();
+    });
+  });
+
+  renderCompanies();
+});
+
+function filteredCompanies(){
+  return companies.filter(c=>{
+    if(roleFilter!=="all" && !c.roles.includes(roleFilter)) return false;
+    if(companyQuery){
+      const blob = (c.name+" "+c.roles.join(" ")).toLowerCase();
+      if(!blob.includes(companyQuery)) return false;
+    }
+    return true;
+  });
+}
+
+function renderCompanies(){
+  const wrap = document.getElementById('companyCards');
+  wrap.innerHTML = "";
+  const list = filteredCompanies();
+  const pages = Math.max(1, Math.ceil(list.length / companiesPageSize));
+  companiesPage = Math.min(companiesPage, pages);
+  const start = (companiesPage-1)*companiesPageSize;
+  const pageItems = list.slice(start, start+companiesPageSize);
+
+  const tpl = document.getElementById('companyCardTpl');
+  pageItems.forEach(c=>{
+    const node = tpl.content.cloneNode(true);
+    node.querySelector('.company-name').textContent = c.name;
+    node.querySelector('.company-role').textContent = c.roles.map(r=>r.toUpperCase()).join(" • ");
+    node.querySelector('.freq-badge').textContent = `Freq ${"★".repeat(c.freq)}`;
+    node.querySelector('.company-note').textContent = c.note || "";
+    const topicsPreview = node.querySelector('.topics-preview');
+    const tset = new Set((questions.filter(q=>q.companyId===c.id).flatMap(q=>q.topics||[])));
+    Array.from(tset).slice(0,6).forEach(t=>{
+      const span = document.createElement('span');
+      span.className = 'badge text-bg-secondary';
+      span.textContent = t;
+      topicsPreview.appendChild(span);
+    });
+    node.querySelector('.company-card').addEventListener('click', ()=> openCompany(c.id));
+    wrap.appendChild(node);
+  });
+
+  buildPager('companiesPagination', pages, (p)=>{ companiesPage=p; renderCompanies(); });
+}
+
+function buildPager(elemId, pages, onGo){
+  const ul = document.getElementById(elemId);
+  ul.innerHTML = "";
+  const mk = (lbl, p, dis=false, act=false)=>{
+    const li = document.createElement('li');
+    li.className = `page-item ${dis?'disabled':''} ${act?'active':''}`;
+    const a = document.createElement('a');
+    a.className = 'page-link'; a.href='#'; a.textContent = lbl;
+    a.onclick = (e)=>{ e.preventDefault(); if(!dis){ onGo(p); } };
+    li.appendChild(a); ul.appendChild(li);
+  };
+  const cur = elemId==='companiesPagination'?companiesPage:detailPage;
+  mk('«', Math.max(1,cur-1), cur===1);
+  for(let p=1;p<=pages;p++){
+    if(p===1 || p===pages || Math.abs(p-cur)<=1) mk(String(p), p, false, p===cur);
+    else if(Math.abs(p-cur)===2){
+      const li=document.createElement('li'); li.className='page-item disabled';
+      li.innerHTML='<span class="page-link">…</span>'; ul.appendChild(li);
+    }
+  }
+  mk('»', Math.min(pages,cur+1), cur===pages);
+}
+
+// --------------------------------- Detail (Company page) ---------------------------------
+function openCompany(id){
+  currentCompany = companies.find(c=>c.id===id);
+  currentDifficulty = "all"; topicFilterSet.clear(); detailPage=1;
+
+  // Title
+  document.getElementById('companyTitle').textContent = currentCompany.name;
+
+  // Blueprint
+  const bpWrap = document.getElementById('roundBlueprint');
+  bpWrap.innerHTML = "";
+  const defaultRounds = [
+    {name:"OA", focus:["arrays","strings","hashmap"], notes:"Timed coding + MCQs"},
+    {name:"DSA Rounds", focus:["graphs","dp","trees","heap"], notes:"2–3 interviews"},
+    {name:"LLD", focus:["OOP","design patterns"], notes:"Design classes/relations"},
+    {name:"HLD", focus:["scalability","consistency","caching"], notes:"APIs + diagrams"},
+    {name:"Behavioral", focus:["ownership","conflict","impact"], notes:"STAR format"}
+  ];
+  // Simple cards
+  defaultRounds.forEach(r=>{
+    const col = document.createElement('div'); col.className='col-12 col-md-6 col-lg-4';
+    col.innerHTML = `<div class="border rounded p-3 h-100">
+      <div class="fw-semibold mb-1">${r.name}</div>
+      <div class="small text-muted">${r.notes}</div>
+      <div class="mt-2 small">${r.focus.map(f=>`<span class="badge text-bg-secondary me-1 mb-1">${f}</span>`).join("")}</div>
+    </div>`;
+    bpWrap.appendChild(col);
+  });
+
+  // Toggle sections
+  document.getElementById('companiesSection').style.display = 'none';
+  document.getElementById('detailSection').style.display = 'block';
+
+  // Build topic chips from this company's questions
+  buildTopicChipsForCompany();
+
+  renderDetailList();
+}
+
+function backToGrid(){
+  document.getElementById('detailSection').style.display = 'none';
+  document.getElementById('companiesSection').style.display = 'block';
+  currentCompany = null;
+}
+
+function buildTopicChipsForCompany(){
+  const wrap = document.getElementById('topicChips');
+  wrap.innerHTML = "";
+  const set = new Set(questions.filter(q=>q.companyId===currentCompany.id).flatMap(q=>q.topics||[]));
+  const mk = (label, all=false, topic=null)=>{
+    const el = document.createElement('span');
+    el.className = 'topic-chip';
+    el.textContent = label;
+    if(all) el.dataset.all="1"; if(topic) el.dataset.topic = topic;
+    el.onclick = ()=>{
+      if(all) topicFilterSet.clear();
+      else { if(topicFilterSet.has(topic)) topicFilterSet.delete(topic); else topicFilterSet.add(topic); }
+      updateChipStates(); detailPage=1; renderDetailList();
+    };
+    return el;
+  };
+  wrap.appendChild(mk("All Topics", true));
+  Array.from(set).sort().forEach(t=> wrap.appendChild(mk(t,false,t)) );
+  updateChipStates();
+}
+
+function updateChipStates(){
+  document.querySelectorAll('#topicChips .topic-chip').forEach(el=>{
+    if(el.dataset.all==="1") el.classList.toggle('active', topicFilterSet.size===0);
+    else el.classList.toggle('active', topicFilterSet.has(el.dataset.topic));
+  });
+}
+
+function filteredDetail(){
+  let arr = questions.filter(q=>q.companyId===currentCompany.id);
+  if(currentDifficulty!=="all") arr = arr.filter(q=>q.difficulty===currentDifficulty);
+  if(topicFilterSet.size>0) arr = arr.filter(q=> (q.topics||[]).some(t=>topicFilterSet.has(t)));
+  return arr;
+}
+
+function renderDetailList(){
+  const list = filteredDetail();
+  const wrap = document.getElementById('questionList');
+  wrap.innerHTML = "";
+  const pages = Math.max(1, Math.ceil(list.length / detailPageSize));
+  detailPage = Math.min(detailPage, pages);
+  const start = (detailPage-1)*detailPageSize;
+  const pageItems = list.slice(start, start+detailPageSize);
+
+  const tpl = document.getElementById('questionRowTpl');
+  pageItems.forEach(q=>{
+    const node = tpl.content.cloneNode(true);
+    node.querySelector('.q-title').textContent = q.title;
+    node.querySelector('.q-topics').textContent = (q.topics||[]).join(' • ');
+    node.querySelector('.q-round').textContent = q.round || '';
+    const bdg = node.querySelector('.q-diff'); bdg.textContent = q.difficulty.toUpperCase(); bdg.classList.add(q.difficulty);
+    const a = node.querySelector('.q-link'); a.href = q.leetcodeUrl;
+    node.querySelector('.q-hint').onclick = ()=> alert(`Hint: ${q.hint || 'Think about pattern and constraints.'}`);
+    wrap.appendChild(node);
+  });
+
+  buildPager('detailPagination', pages, (p)=>{ detailPage=p; renderDetailList(); });
+}
+</script>
+{% endblock %}

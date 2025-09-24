@@ -1,8 +1,3 @@
-"""
-Web-Inter-Prep - Online Interview Preparation Platform
-Main Flask Application File
-"""
-
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
@@ -14,7 +9,9 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 import random
 
+# Load environment once
 load_dotenv()
+
 app = Flask(__name__, template_folder="../frontend/templates", static_folder="../frontend/static")
 app.secret_key = 'your-secret-key-change-in-production'  # Change this in production
 
@@ -23,6 +20,7 @@ oauth = OAuth(app)
 app.config['GOOGLE_CLIENT_ID'] = os.environ.get('GOOGLE_CLIENT_ID', '')
 app.config['GOOGLE_CLIENT_SECRET'] = os.environ.get('GOOGLE_CLIENT_SECRET', '')
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
+GEMINI_MODEL = os.environ.get('GEMINI_MODEL', 'gemini-2.0-flash')  # configurable model
 
 if app.config['GOOGLE_CLIENT_ID'] and app.config['GOOGLE_CLIENT_SECRET']:
     oauth.register(
@@ -58,6 +56,7 @@ def init_db():
             question_id INTEGER NOT NULL,
             correct BOOLEAN NOT NULL,
             user_answer TEXT,
+            mock_session_id INTEGER,
             timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users (id)
         )
@@ -81,6 +80,206 @@ def init_db():
 
 # Initialize database on startup
 init_db()
+
+# --- AI Interviewer: Gemini helper and routes ---
+
+def _gemini_call(parts, expect_json=False, temperature=0.6):
+    """Call Gemini generateContent with given parts. Returns text."""
+    if not GEMINI_API_KEY:
+        return ""
+    payload = {
+        "contents": [{"role": "user", "parts": parts}],
+        "generationConfig": {"temperature": temperature}
+    }
+    if expect_json:
+        # Ask Gemini to return JSON text; route still parses it on our side
+        payload["generationConfig"]["response_mime_type"] = "application/json"
+
+    resp = requests.post(
+        f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent",
+        headers={"Content-Type": "application/json", "X-goog-api-key": GEMINI_API_KEY},
+        json=payload, timeout=20
+    )
+    if resp.status_code != 200:
+        # Return truncated body for UI error handling
+        return ""
+    data = resp.json()
+    candidates = data.get("candidates") or []
+    if not candidates:
+        return ""
+    parts = (candidates[0].get("content") or {}).get("parts", [])
+    text = "\n".join([p.get("text", "") for p in parts if p.get("text")]).strip()
+    return text
+
+@app.route("/api/ai-interview/start", methods=["POST"])
+def ai_interview_start():
+    """Start an AI interview: creates mock_session, returns first question."""
+    if "user_id" not in session:
+        return jsonify({"ok": False, "error": "Not authenticated"}), 401
+
+    body = request.get_json(force=True, silent=True) or {}
+    role = (body.get("role") or "Software Engineer").strip()
+    level = (body.get("level") or "Fresher").strip()
+    company = (body.get("company") or "Any").strip()
+
+    # Create a mock session row (reuse your schema)
+    conn = sqlite3.connect("interview_prep.db")
+    cur = conn.cursor()
+    cur.execute("INSERT INTO mock_sessions (user_id) VALUES (?)", (session["user_id"],))
+    mock_session_id = cur.lastrowid
+    conn.commit()
+    conn.close()
+
+    session["mock_session_id"] = mock_session_id
+    session["ai_round"] = 1
+
+    interviewer_prompt = (
+        f"You are an interviewer for role '{role}' at '{company}' for a '{level}' candidate. "
+        "Ask one concise question only. No preface, no explanation. "
+        "Return strict JSON with keys: question, topic."
+    )
+    txt = _gemini_call([{"text": interviewer_prompt}], expect_json=True)
+    try:
+        qobj = json.loads(txt) if txt else {}
+    except Exception:
+        qobj = {"question": "Tell me about yourself.", "topic": "Behavioral"}
+
+    return jsonify({
+        "ok": True,
+        "session_id": mock_session_id,
+        "question": qobj.get("question", ""),
+        "topic": qobj.get("topic", "General")
+    })
+
+@app.route("/api/ai-interview/answer", methods=["POST"])
+def ai_interview_answer():
+    """Grade the answer and return feedback + next question."""
+    if "user_id" not in session or "mock_session_id" not in session:
+        return jsonify({"ok": False, "error": "No active interview"}), 400
+
+    body = request.get_json(force=True, silent=True) or {}
+    question_text = (body.get("question") or "").strip()
+    user_answer = (body.get("answer") or "").strip()
+    if not question_text or not user_answer:
+        return jsonify({"ok": False, "error": "Missing question or answer"}), 400
+
+    # Evaluator rubric prompt
+    rubric = (
+        "Evaluate the candidate's answer. Use rubric: correctness 0-3, clarity 0-3, depth 0-2, conciseness 0-2. "
+        "Compute score_10 = sum. verdict in [Pass, Borderline, Improve]. "
+        "Provide strengths (3 items), improvements (3 items), ideal_answer (5-8 lines). "
+        "Return strict JSON with keys: correctness, clarity, depth, conciseness, score_10, verdict, strengths, improvements, ideal_answer."
+    )
+    eval_prompt = f"Question:\n{question_text}\n\nCandidate_Answer:\n{user_answer}\n\n{rubric}"
+    eval_json_text = _gemini_call([{"text": eval_prompt}], expect_json=True, temperature=0.2)
+
+    try:
+        evaluation = json.loads(eval_json_text) if eval_json_text else {}
+    except Exception:
+        evaluation = {}
+
+    # Reasonable fallback if model didn't return JSON
+    if not isinstance(evaluation, dict) or "score_10" not in evaluation:
+        evaluation = {
+            "correctness": 2, "clarity": 2, "depth": 1, "conciseness": 1,
+            "score_10": 6, "verdict": "Borderline",
+            "strengths": ["Relevant points"], "improvements": ["Add examples"], "ideal_answer": "Provide structure with key steps."
+        }
+
+    # Save attempt with feedback JSON stuffed in user_answer
+    try:
+        conn = sqlite3.connect("interview_prep.db")
+        cur = conn.cursor()
+        cur.execute('''
+            INSERT INTO attempts (user_id, question_id, correct, user_answer, mock_session_id)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (session["user_id"], 0, 1 if int(evaluation.get("score_10", 0)) >= 7 else 0,
+              json.dumps({"q": question_text, "a": user_answer, "feedback": evaluation}),
+              session["mock_session_id"]))
+        conn.commit()
+    finally:
+        conn.close()
+
+    # Next question
+    session["ai_round"] = int(session.get("ai_round", 1)) + 1
+    next_prompt = (
+        "Based on the previous question and the candidate's answer quality, ask the next interview question. "
+        "Increase difficulty gradually. Return strict JSON: {\"question\":\"...\",\"topic\":\"...\"}. "
+        f"Previous question: {question_text}"
+    )
+    next_json_text = _gemini_call([{"text": next_prompt}], expect_json=True)
+    try:
+        nxt = json.loads(next_json_text) if next_json_text else {}
+    except Exception:
+        nxt = {"question": "Explain REST vs RPC and trade-offs.", "topic": "System Design"}
+
+    return jsonify({
+        "ok": True,
+        "evaluation": evaluation,
+        "next_question": nxt.get("question", ""),
+        "next_topic": nxt.get("topic", "General"),
+        "round": session["ai_round"]
+    })
+
+@app.route("/api/gemini/solve", methods=["POST"])
+def gemini_solve():
+    if "user_id" not in session:
+        return jsonify({"ok": False, "error": "Not authenticated"}), 401
+    data = request.get_json(force=True, silent=True) or {}
+    title = (data.get("title") or "").strip()
+    description = (data.get("description") or "").strip()
+    topics = data.get("topics") or []
+    language = (data.get("language") or "Python").strip()
+
+    if not GEMINI_API_KEY:
+        return jsonify({"ok": False, "error": "GEMINI_API_KEY not configured"}), 500
+    if not title:
+        return jsonify({"ok": False, "error": "Missing title"}), 400
+
+    # Ask for strict JSON so parsing is predictable
+    prompt = (
+        "You are an expert DSA tutor. Given a LeetCode-style problem, produce a concise, interview-ready solution.\n"
+        f"Title: {title}\n"
+        f"Description: {description}\n"
+        f"Topics: {', '.join(topics)}\n"
+        f"Language: {language}\n\n"
+        "Return strict JSON with keys:\n"
+        "approach (1-3 sentences), timeComplexity (e.g., O(n log n)), spaceComplexity, "
+        "code (complete runnable snippet), explanation (3-6 sentences).\n"
+    )
+
+    payload = {
+        "contents": [{"role": "user", "parts": [{"text": prompt}]}],
+        "generationConfig": {
+            "temperature": 0.4,
+            "response_mime_type": "application/json"
+        }
+    }
+
+    try:
+        resp = requests.post(
+            f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent",
+            headers={"Content-Type": "application/json", "X-goog-api-key": GEMINI_API_KEY},
+            json=payload, timeout=20
+        )
+        if resp.status_code != 200:
+            return jsonify({"ok": False, "error": f"Gemini error {resp.status_code}: {resp.text[:300]}"}), 502
+        data = resp.json()
+        parts = (data.get("candidates") or [{}])[0].get("content", {}).get("parts", [])
+        text = "\n".join([p.get("text","") for p in parts if p.get("text")]).strip()
+        try:
+            result = json.loads(text) if text else {}
+        except Exception:
+            result = {}
+        # minimal validation/fallback
+        result.setdefault("approach", "High-level idea not available.")
+        result.setdefault("timeComplexity", "Unknown")
+        result.setdefault("spaceComplexity", "Unknown")
+        result.setdefault("code", "# Code unavailable")
+        result.setdefault("explanation", "Explanation unavailable.")
+        return jsonify({"ok": True, "solution": result})
+    except Exception as e:
+        return jsonify({"ok": False, "error": f"Unexpected error: {e}"}), 500
 
 @app.route('/')
 def home():
@@ -123,7 +322,7 @@ def api_roadmap():
 
     try:
         resp = requests.post(
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+            f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent",
             headers={
                 'Content-Type': 'application/json',
                 'X-goog-api-key': GEMINI_API_KEY,
@@ -131,6 +330,7 @@ def api_roadmap():
             json={
                 'contents': [
                     {
+                        'role': 'user',
                         'parts': [
                             {'text': prompt}
                         ]
@@ -139,18 +339,35 @@ def api_roadmap():
             },
             timeout=20
         )
-        resp.raise_for_status()
+        if resp.status_code != 200:
+            # Pass through truncated error body for easier debugging (safe: no secrets)
+            return jsonify({'error': f'Gemini API error {resp.status_code}: {resp.text[:300]}'}), 502
+
         data = resp.json()
+
+        # Robust parsing against safety blocks / empty candidates
         text = ''
-        try:
-            text = data['candidates'][0]['content']['parts'][0]['text']
-        except Exception:
+        candidates = data.get('candidates') or []
+        if candidates:
+            content = candidates[0].get('content') or {}
+            parts = content.get('parts') or []
+            # Join all text parts if available
+            collected = []
+            for p in parts:
+                t = p.get('text') or ''
+                if t:
+                    collected.append(t)
+            text = '\n'.join(collected).strip()
+        if not text:
+            # Fallback to stringified body to surface any useful info
             text = str(data)
+
         # Convert basic markdown (* bullets and headings) to HTML cards
         lines = [ln.strip() for ln in text.split('\n')]
         cards = []
         current = []
         current_title = 'Roadmap'
+
         def flush():
             if not current:
                 return
@@ -168,7 +385,7 @@ def api_roadmap():
                         html_parts.append('</ul>')
                         in_ul = False
                     if ln:
-                        html_parts.append('<p class="mb-2">' + ln.replace('**','') + '</p>')
+                        html_parts.append('<p class="mb-2">' + ln.replace('**', '') + '</p>')
             if in_ul:
                 html_parts.append('</ul>')
             cards.append(
@@ -178,14 +395,17 @@ def api_roadmap():
                 '</div>'
             )
             current.clear()
+
         # Heuristic: split by headings that don’t start with *
         for ln in lines:
-            if ln and not ln.startswith('* ') and (ln.lower().startswith('foundational') or ln.lower().startswith('intermediate') or ln.lower().startswith('advanced')):
+            lower = ln.lower()
+            if ln and not ln.startswith('* ') and (lower.startswith('foundational') or lower.startswith('intermediate') or lower.startswith('advanced')):
                 flush()
-                current_title = ln.replace('**','')
+                current_title = ln.replace('**', '')
             else:
                 current.append(ln)
         flush()
+
         html = (
             '<div class="ai-roadmap">'
             '<div class="alert alert-info mb-3"><i class="fas fa-wand-magic me-2"></i><strong>Generated with Gemini</strong></div>'
@@ -194,7 +414,7 @@ def api_roadmap():
         )
         return jsonify({'html': html})
     except requests.HTTPError as e:
-        return jsonify({'error': f'Gemini API error: {e.response.text[:300]}' }), 502
+        return jsonify({'error': f'Gemini API error: {getattr(e.response, "text", str(e))[:300]}' }), 502
     except Exception as e:
         return jsonify({'error': f'Unexpected error: {e}'}), 500
 
@@ -236,7 +456,7 @@ def register():
             conn = sqlite3.connect('interview_prep.db')
             cursor = conn.cursor()
             cursor.execute('INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)',
-                         (name, email, password_hash))
+                           (name, email, password_hash))
             conn.commit()
             conn.close()
             
@@ -377,7 +597,7 @@ def dashboard():
     # Calculate current streak
     current_streak = 0
     if practice_dates:
-        from datetime import date, timedelta
+        from datetime import date, timedelta as _td
         today = date.today()
         current_date = today
         
@@ -385,7 +605,7 @@ def dashboard():
             practice_date_obj = datetime.strptime(practice_date, '%Y-%m-%d').date()
             if current_date == practice_date_obj:
                 current_streak += 1
-                current_date -= timedelta(days=1)
+                current_date -= _td(days=1)
             else:
                 break
     
@@ -413,12 +633,17 @@ def logout():
     return redirect(url_for('home'))
 
 def load_questions():
-    """Load questions from JSON file"""
     try:
-        with open('data/questions.json', 'r') as f:
+        # Get the directory where this script (app.py) is located
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        q_path = os.path.join(base_dir, 'data', 'questions.json')
+        print('Loading questions from:', q_path)
+        with open(q_path, 'r') as f:
             data = json.load(f)
+            print('Loaded', len(data['questions']), 'questions')
             return data['questions']
-    except FileNotFoundError:
+    except Exception as e:
+        print('Error loading questions:', e)
         return []
 
 @app.route('/practice')
@@ -452,7 +677,7 @@ def submit_answer():
     correct = data.get('correct', False)
     user_answer = data.get('user_answer', '')
     
-    # Save attempt to database
+    # Save attempt to database (no mock session in this path)
     conn = sqlite3.connect('interview_prep.db')
     cursor = conn.cursor()
     cursor.execute('''
@@ -548,9 +773,9 @@ def mock_submit_answer():
     conn = sqlite3.connect('interview_prep.db')
     cursor = conn.cursor()
     cursor.execute('''
-        INSERT INTO attempts (user_id, question_id, correct, user_answer)
-        VALUES (?, ?, ?, ?)
-    ''', (session['user_id'], question_id, correct, user_answer))
+        INSERT INTO attempts (user_id, question_id, correct, user_answer, mock_session_id)
+        VALUES (?, ?, ?, ?, ?)
+    ''', (session['user_id'], question_id, correct, user_answer, session['mock_session_id']))
     conn.commit()
     conn.close()
     
@@ -576,13 +801,28 @@ def end_mock_interview():
     conn = sqlite3.connect('interview_prep.db')
     cursor = conn.cursor()
     
-    # Count correct answers from this session (approximate by recent attempts)
+    # Prefer counting correct answers tied to this mock session; fallback to old time-window if none
     cursor.execute('''
         SELECT COUNT(*) FROM attempts 
-        WHERE user_id = ? AND correct = 1 
-        AND timestamp >= datetime('now', '-30 minutes')
-    ''', (session['user_id'],))
+        WHERE user_id = ? AND correct = 1 AND mock_session_id = ?
+    ''', (session['user_id'], mock_session_id))
     correct_answers = cursor.fetchone()[0]
+
+    if correct_answers == 0 and questions_answered == 0:
+        # Fallback (legacy behavior): approximate by recent attempts in last 30 minutes
+        cursor.execute('''
+            SELECT COUNT(*) FROM attempts 
+            WHERE user_id = ? AND correct = 1 
+            AND timestamp >= datetime('now', '-30 minutes')
+        ''', (session['user_id'],))
+        correct_answers = cursor.fetchone()[0]
+        # Attempt to infer questions_answered if none set
+        cursor.execute('''
+            SELECT COUNT(*) FROM attempts 
+            WHERE user_id = ?
+            AND timestamp >= datetime('now', '-30 minutes')
+        ''', (session['user_id'],))
+        questions_answered = session.get('mock_questions_answered', 0) or cursor.fetchone()[0]
     
     # Update mock session
     cursor.execute('''
@@ -598,11 +838,12 @@ def end_mock_interview():
     session.pop('mock_start_time', None)
     session.pop('mock_questions_answered', None)
     
+    score_pct = round((correct_answers / questions_answered * 100) if questions_answered > 0 else 0, 1)
     return jsonify({
         'success': True,
         'total_questions': questions_answered,
         'correct_answers': correct_answers,
-        'score': round((correct_answers / questions_answered * 100) if questions_answered > 0 else 0, 1)
+        'score': score_pct
     })
 
 @app.route('/mock/results')
@@ -631,10 +872,23 @@ def mock_results():
     total_questions, correct_answers, start_time, end_time = result
     score = round((correct_answers / total_questions * 100) if total_questions > 0 else 0, 1)
     
-    # Calculate duration
-    if end_time:
-        start_dt = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
-        end_dt = datetime.fromisoformat(end_time.replace('Z', '+00:00'))
+    # Calculate duration using SQLite timestamp format "YYYY-MM-DD HH:MM:SS"
+    def parse_sqlite_ts(ts):
+        if not ts:
+            return None
+        try:
+            return datetime.strptime(ts, '%Y-%m-%d %H:%M:%S')
+        except Exception:
+            # Fallback: try ISO 8601 if stored differently
+            try:
+                return datetime.fromisoformat(ts.replace('Z', '+00:00'))
+            except Exception:
+                return None
+
+    start_dt = parse_sqlite_ts(start_time)
+    end_dt = parse_sqlite_ts(end_time)
+
+    if start_dt and end_dt:
         duration = str(end_dt - start_dt).split('.')[0]  # Remove microseconds
     else:
         duration = "Unknown"
@@ -766,5 +1020,33 @@ def internal_error(error):
     """Handle 500 errors"""
     return render_template('errors/500.html'), 500
 
+@app.route('/ai-interview', methods=['GET', 'POST'])
+def ai_interview():
+    if request.method == 'POST':
+        user_answer = request.form['answer']
+        feedback = f"Thanks for your answer! (You wrote: {user_answer})"
+        return render_template('ai_interview.html', question=None, feedback=feedback)
+    else:
+        question = random.choice([
+            "Tell me about yourself.",
+            "Why do you want this job?",
+            "Describe a challenge you faced and how you overcame it.",
+            "What are your strengths and weaknesses?"
+        ])
+        return render_template('ai_interview.html', question=question, feedback=None)
+
+from services.gemini_client import ask_gemini
+
+@app.route("/api/gemini/qa", methods=["POST"])
+def gemini_qa():
+    data = request.get_json(force=True) or {}
+    prompt = data.get("prompt", "").strip()
+    if not prompt:
+        return jsonify({"ok": False, "error": "Empty prompt"}), 400
+    answer = ask_gemini(prompt)
+    return jsonify({"ok": True, "answer": answer})
+
+# Single unified run block; no secret prints
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=8081)
+    # For development only; disable debug in production
+    app.run(debug=True, host='0.0.0.0', port=8081, use_reloader=False)

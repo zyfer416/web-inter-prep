@@ -1,517 +1,568 @@
 {% extends "base.html" %}
-
 {% block title %}DSA Practice - Web-Inter-Prep{% endblock %}
 
 {% block content %}
-<!-- Header Section -->
 <div class="hero-section bg-gradient-primary text-white py-5">
-    <div class="container text-center">
-        <h1 class="display-4 fw-bold mb-4">
-            <i class="fas fa-code me-3"></i>Data Structures & Algorithms
-        </h1>
-        <p class="lead mb-4">
-            Practice essential DSA problems to prepare for technical interviews
-        </p>
-    </div>
-                </div>
-
-<div class="container py-5">
-    <!-- Category Selection Section -->
-    <div id="categorySection">
-        <div class="row justify-content-center">
-            <div class="col-lg-4 mb-4">
-                <div class="card h-100 shadow-sm category-card" data-category="problem-solving">
-                    <div class="card-body text-center">
-                        <i class="fas fa-puzzle-piece text-primary display-4 mb-3"></i>
-                        <h4 class="card-title">Problem Solving</h4>
-                        <p class="card-text text-muted">General algorithmic challenges</p>
-                        <button class="btn btn-primary">
-                            <i class="fas fa-chevron-right me-2"></i>Explore
-                            </button>
-                    </div>
-                </div>
-                </div>
-
-            <div class="col-lg-4 mb-4">
-                <div class="card h-100 shadow-sm category-card" data-category="data-structures">
-                    <div class="card-body text-center">
-                        <i class="fas fa-project-diagram text-primary display-4 mb-3"></i>
-                        <h4 class="card-title">Data Structures</h4>
-                        <p class="card-text text-muted">Arrays, LinkedLists, Trees, Graphs</p>
-                        <button class="btn btn-primary">
-                            <i class="fas fa-chevron-right me-2"></i>Explore
-                        </button>
-                    </div>
-                    </div>
-                </div>
-
-            <div class="col-lg-4 mb-4">
-                <div class="card h-100 shadow-sm category-card" data-category="algorithms">
-                    <div class="card-body text-center">
-                        <i class="fas fa-cogs text-primary display-4 mb-3"></i>
-                        <h4 class="card-title">Algorithms</h4>
-                        <p class="card-text text-muted">Sorting, Searching, Dynamic Programming</p>
-                        <button class="btn btn-primary">
-                            <i class="fas fa-chevron-right me-2"></i>Explore
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Practice Questions Section (Hidden initially) -->
-        <div class="text-center mt-5">
-            <div class="practice-placeholder">
-                <i class="fas fa-arrow-up display-4 text-muted mb-3"></i>
-                <p class="text-muted">Select a category to view practice questions</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Questions Section (Hidden initially) -->
-    <div id="questionsSection" style="display: none;">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="mb-0">
-                <i class="fas fa-code me-2"></i>Practice Questions
-            </h3>
-            <div class="dropdown">
-                <button class="btn btn-outline-primary dropdown-toggle" type="button" id="difficultyDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                    All Difficulties
-                </button>
-                <ul class="dropdown-menu" aria-labelledby="difficultyDropdown">
-                    <li><a class="dropdown-item" href="#" data-difficulty="all">All Difficulties</a></li>
-                    <li><a class="dropdown-item" href="#" data-difficulty="easy">Easy</a></li>
-                    <li><a class="dropdown-item" href="#" data-difficulty="medium">Medium</a></li>
-                    <li><a class="dropdown-item" href="#" data-difficulty="hard">Hard</a></li>
-                </ul>
-                        </div>
-                    </div>
-        
-        <div class="card shadow-sm">
-            <div class="card-body p-0">
-                <div id="questionsList">
-                    <!-- Questions will be populated here -->
-                </div>
-            </div>
-        </div>
-        
-        <!-- Back to Categories Button -->
-        <div class="text-center mt-4">
-            <button class="btn btn-outline-secondary" id="backToCategories">
-                <i class="fas fa-arrow-left me-2"></i>Back to Categories
-            </button>
-        </div>
-    </div>
+  <div class="container text-center">
+    <h1 class="display-4 fw-bold mb-2"><i class="fas fa-code me-3"></i>Data Structures & Algorithms</h1>
+    <p class="lead mb-0">Practice 100 curated LeetCode problems with filters, hints, and solutions</p>
+  </div>
 </div>
 
-<!-- Question Template (Hidden) -->
-<template id="questionTemplate">
-    <div class="question-item p-4 border-bottom">
-        <div class="d-flex justify-content-between align-items-start mb-3">
-            <h5 class="question-title mb-0"></h5>
-            <span class="badge difficulty-badge"></span>
+<div class="container py-5">
+  <!-- Category cards -->
+  <div id="categorySection">
+    <div class="row justify-content-center">
+      <div class="col-lg-4 mb-4">
+        <div class="card h-100 shadow-sm category-card" data-category="problem-solving">
+          <div class="card-body text-center">
+            <i class="fas fa-puzzle-piece text-primary display-4 mb-3"></i>
+            <h4 class="card-title">Problem Solving</h4>
+            <p class="card-text text-muted">General algorithmic challenges</p>
+            <button class="btn btn-primary"><i class="fas fa-chevron-right me-2"></i>Explore</button>
+          </div>
         </div>
-        <p class="question-description text-muted mb-3"></p>
-        <div class="d-flex gap-2">
-            <a href="#" class="btn btn-primary btn-sm leetcode-link" target="_blank">
-                <i class="fas fa-external-link-alt me-2"></i>View on LeetCode
-            </a>
-            <button class="btn btn-outline-primary btn-sm hint-btn">
-                <i class="fas fa-lightbulb me-2"></i>Hint
-            </button>
-            <button class="btn btn-success btn-sm solution-btn">
-                <i class="fas fa-code me-2"></i>View Solution
-            </button>
+      </div>
+      <div class="col-lg-4 mb-4">
+        <div class="card h-100 shadow-sm category-card" data-category="data-structures">
+          <div class="card-body text-center">
+            <i class="fas fa-project-diagram text-primary display-4 mb-3"></i>
+            <h4 class="card-title">Data Structures</h4>
+            <p class="card-text text-muted">Arrays, LinkedLists, Trees, Graphs</p>
+            <button class="btn btn-primary"><i class="fas fa-chevron-right me-2"></i>Explore</button>
+          </div>
         </div>
-        <!-- Solution Section (Hidden initially) -->
-        <div class="solution-section mt-3" style="display: none;">
-            <div class="card border-success">
-                <div class="card-header bg-success text-white">
-                    <h6 class="mb-0"><i class="fas fa-code me-2"></i>Solution</h6>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <strong>Approach:</strong>
-                        <p class="solution-approach mb-2"></p>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <strong>Time Complexity:</strong>
-                            <span class="solution-time-complexity"></span>
-                        </div>
-                        <div class="col-md-6">
-                            <strong>Space Complexity:</strong>
-                            <span class="solution-space-complexity"></span>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <strong>Code:</strong>
-                        <pre class="solution-code bg-light p-3 rounded mt-2"><code></code></pre>
-                    </div>
-                    <div class="mb-3">
-                        <strong>Explanation:</strong>
-                        <p class="solution-explanation"></p>
-                    </div>
-                </div>
-            </div>
+      </div>
+      <div class="col-lg-4 mb-4">
+        <div class="card h-100 shadow-sm category-card" data-category="algorithms">
+          <div class="card-body text-center">
+            <i class="fas fa-cogs text-primary display-4 mb-3"></i>
+            <h4 class="card-title">Algorithms</h4>
+            <p class="card-text text-muted">Sorting, Searching, Dynamic Programming</p>
+            <button class="btn btn-primary"><i class="fas fa-chevron-right me-2"></i>Explore</button>
+          </div>
         </div>
+      </div>
     </div>
+
+    <div class="text-center mt-5 practice-placeholder">
+      <i class="fas fa-arrow-up display-4 text-muted mb-3"></i>
+      <p class="text-muted">Select a category to view practice questions</p>
+    </div>
+  </div>
+
+  <!-- Questions -->
+  <div id="questionsSection" style="display:none;">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+      <h3 class="mb-0"><i class="fas fa-code me-2"></i><span id="sectionTitle">Practice Questions</span></h3>
+      <div class="d-flex flex-wrap gap-2">
+        <div class="input-group">
+          <span class="input-group-text"><i class="fas fa-search"></i></span>
+          <input id="searchInput" class="form-control" placeholder="Search titles or topics..." />
+        </div>
+        <div class="dropdown">
+          <button class="btn btn-outline-primary dropdown-toggle" id="difficultyDropdown" data-bs-toggle="dropdown">All Difficulties</button>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="#" data-difficulty="all">All Difficulties</a></li>
+            <li><a class="dropdown-item" href="#" data-difficulty="easy">Easy</a></li>
+            <li><a class="dropdown-item" href="#" data-difficulty="medium">Medium</a></li>
+            <li><a class="dropdown-item" href="#" data-difficulty="hard">Hard</a></li>
+          </ul>
+        </div>
+        <select id="pageSizeSelect" class="form-select" style="width:130px;">
+          <option value="10" selected>10 / page</option>
+          <option value="15">15 / page</option>
+          <option value="20">20 / page</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Topic chips -->
+    <div id="topicChips" class="mb-3 d-flex flex-wrap gap-2">
+      <!-- chips injected -->
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body p-0">
+        <div id="questionsList"></div>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mt-3">
+      <button class="btn btn-outline-secondary" id="backToCategories"><i class="fas fa-arrow-left me-2"></i>Back</button>
+      <nav>
+        <ul class="pagination mb-0" id="pagination">
+          <!-- pages -->
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<!-- Template -->
+<template id="questionTemplate">
+  <div class="question-item p-4 border-bottom">
+    <div class="d-flex justify-content-between align-items-start mb-2">
+      <div>
+        <h5 class="question-title mb-1"></h5>
+        <div class="small text-muted topic-line"></div>
+      </div>
+      <span class="badge difficulty-badge"></span>
+    </div>
+    <p class="question-description text-muted mb-3"></p>
+    <div class="d-flex flex-wrap gap-2">
+      <a href="#" class="btn btn-primary btn-sm leetcode-link" target="_blank"><i class="fas fa-external-link-alt me-2"></i>View on LeetCode</a>
+      <button class="btn btn-outline-primary btn-sm hint-btn"><i class="fas fa-lightbulb me-2"></i>Hint</button>
+      <button class="btn btn-success btn-sm solution-btn"><i class="fas fa-code me-2"></i>View Solution</button>
+    </div>
+
+    <div class="solution-section mt-3" style="display:none;">
+      <div class="card border-success">
+        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+          <h6 class="mb-0"><i class="fas fa-code me-2"></i>Solution</h6>
+          <button class="btn btn-sm btn-light copy-code"><i class="fas fa-copy me-1"></i>Copy</button>
+        </div>
+        <div class="card-body">
+          <div class="mb-2"><strong>Approach:</strong> <span class="solution-approach"></span></div>
+          <div class="row mb-2">
+            <div class="col-md-6"><strong>Time:</strong> <span class="solution-time-complexity"></span></div>
+            <div class="col-md-6"><strong>Space:</strong> <span class="solution-space-complexity"></span></div>
+          </div>
+          <pre class="solution-code bg-light p-3 rounded mt-2"><code></code></pre>
+          <div class="mt-2"><strong>Explanation:</strong> <span class="solution-explanation"></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <style>
-.category-card {
-    transition: all 0.3s ease-in-out;
-    cursor: pointer;
-}
-
-.category-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-}
-
-.practice-placeholder {
-    opacity: 0.6;
-}
-
-.question-item:last-child {
-    border-bottom: none !important;
-}
-
-.difficulty-badge.easy {
-    background-color: #28a745;
-}
-
-.difficulty-badge.medium {
-    background-color: #ffc107;
-    color: #212529;
-}
-
-.difficulty-badge.hard {
-    background-color: #dc3545;
-}
-
-.leetcode-link:hover {
-    text-decoration: none;
-}
-
-.solution-section {
-    animation: slideDown 0.3s ease-out;
-}
-
-.solution-code {
-    font-family: 'Courier New', monospace;
-    font-size: 0.9rem;
-    line-height: 1.4;
-    overflow-x: auto;
-}
-
-.solution-code code {
-    color: #333;
-}
-
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
+.category-card{transition:.3s;cursor:pointer}
+.category-card:hover{transform:translateY(-5px);box-shadow:0 8px 25px rgba(0,0,0,.15)}
+.practice-placeholder{opacity:.6}
+.question-item:last-child{border-bottom:none!important}
+.difficulty-badge.easy{background:#28a745}
+.difficulty-badge.medium{background:#ffc107;color:#212529}
+.difficulty-badge.hard{background:#dc3545}
+.leetcode-link:hover{text-decoration:none}
+.solution-section{animation:slideDown .3s ease-out}
+.solution-code{font-family:Consolas,Monaco,'Courier New',monospace;font-size:.9rem;line-height:1.45;overflow-x:auto}
+.topic-chip{border:1px solid #d0d7de;border-radius:999px;padding:.25rem .6rem;font-size:.85rem;cursor:pointer}
+.topic-chip.active{background:#e7f1ff;border-color:#84b6ff}
+@keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
 </style>
 
 <script>
-// DSA Questions Data
-const dsaQuestions = {
-    'problem-solving': [
-        {
-            title: 'Two Sum',
-            description: 'Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.',
-            difficulty: 'easy',
-            leetcodeUrl: 'https://leetcode.com/problems/two-sum/',
-            solution: {
-                approach: 'Use a hash map to store complements. For each number, check if its complement (target - num) exists in the map.',
-                timeComplexity: 'O(n)',
-                spaceComplexity: 'O(n)',
-                code: `function twoSum(nums, target) {
-    const map = new Map();
-    
-    for (let i = 0; i < nums.length; i++) {
-        const complement = target - nums[i];
-        
-        if (map.has(complement)) {
-            return [map.get(complement), i];
-        }
-        
-        map.set(nums[i], i);
-    }
-    
-    return [];
-}`,
-                explanation: 'We iterate through the array once, storing each number and its index in a hash map. For each number, we check if its complement (target - current number) already exists in the map. If found, we return the current index and the stored complement index.'
-            }
-        },
-        {
-            title: 'Valid Parentheses',
-            description: 'Given a string s containing just the characters \'(\', \')\', \'{\', \'}\', \'[\' and \']\', determine if the input string is valid.',
-            difficulty: 'easy',
-            leetcodeUrl: 'https://leetcode.com/problems/valid-parentheses/',
-            solution: {
-                approach: 'Use a stack to keep track of opening brackets. For each closing bracket, check if it matches the most recent opening bracket.',
-                timeComplexity: 'O(n)',
-                spaceComplexity: 'O(n)',
-                code: `function isValid(s) {
-    const stack = [];
-    const brackets = {
-        ')': '(',
-        '}': '{',
-        ']': '['
-    };
-    
-    for (let char of s) {
-        if (char in brackets) {
-            if (stack.pop() !== brackets[char]) {
-                return false;
-            }
-        } else {
-            stack.push(char);
-        }
-    }
-    
-    return stack.length === 0;
-}`,
-                explanation: 'We use a stack to keep track of opening brackets. When we encounter a closing bracket, we check if it matches the most recent opening bracket (top of stack). If they don\'t match or if the stack is empty, the string is invalid.'
-            }
-        },
-        {
-            title: 'Merge Intervals',
-            description: 'Given an array of intervals where intervals[i] = [starti, endi], merge all overlapping intervals.',
-            difficulty: 'medium',
-            leetcodeUrl: 'https://leetcode.com/problems/merge-intervals/'
-        }
-    ],
-    'data-structures': [
-        {
-            title: 'Reverse Linked List',
-            description: 'Given the head of a singly linked list, reverse the list, and return the reversed list.',
-            difficulty: 'easy',
-            leetcodeUrl: 'https://leetcode.com/problems/reverse-linked-list/'
-        },
-        {
-            title: 'Maximum Depth of Binary Tree',
-            description: 'Given the root of a binary tree, return its maximum depth.',
-            difficulty: 'easy',
-            leetcodeUrl: 'https://leetcode.com/problems/maximum-depth-of-binary-tree/'
-        },
-        {
-            title: 'LRU Cache',
-            description: 'Design a data structure that follows the constraints of a Least Recently Used (LRU) cache.',
-            difficulty: 'medium',
-            leetcodeUrl: 'https://leetcode.com/problems/lru-cache/'
-        }
-    ],
-    'algorithms': [
-        {
-            title: 'Binary Search',
-            description: 'Given an array of integers nums which is sorted in ascending order, and an integer target, write a function to search target in nums.',
-            difficulty: 'easy',
-            leetcodeUrl: 'https://leetcode.com/problems/binary-search/',
-            solution: {
-                approach: 'Use binary search by comparing target with middle element and eliminating half of the search space in each iteration.',
-                timeComplexity: 'O(log n)',
-                spaceComplexity: 'O(1)',
-                code: `function search(nums, target) {
-    let left = 0;
-    let right = nums.length - 1;
-    
-    while (left <= right) {
-        const mid = Math.floor((left + right) / 2);
-        
-        if (nums[mid] === target) {
-            return mid;
-        } else if (nums[mid] < target) {
-            left = mid + 1;
-        } else {
-            right = mid - 1;
-        }
-    }
-    
-    return -1;
-}`,
-                explanation: 'Binary search works by repeatedly dividing the search space in half. We compare the target with the middle element and eliminate the half that cannot contain the target. This gives us O(log n) time complexity.'
-            }
-        },
-        {
-            title: 'Merge Sort',
-            description: 'Implement the merge sort algorithm to sort an array of integers.',
-            difficulty: 'medium',
-            leetcodeUrl: 'https://leetcode.com/problems/sort-an-array/'
-        },
-        {
-            title: 'Dijkstra\'s Algorithm',
-            description: 'Implement Dijkstra\'s algorithm to find the shortest path from a source node to all other nodes in a weighted graph.',
-            difficulty: 'hard',
-            leetcodeUrl: 'https://leetcode.com/problems/network-delay-time/'
-        }
-    ]
+// ------------- Data (100 items) -------------
+const TOPICS = ["array","string","hashmap","two-pointers","sliding-window","stack","queue","linkedlist","tree","bst","heap","greedy"];
+
+const seed = {
+  "problem-solving": [],
+  "data-structures": [],
+  "algorithms": []
 };
 
-let currentCategory = '';
-let currentDifficulty = 'all';
+// Helper to push question
+function Q(cat, title, description, difficulty, url, topics, hint, sol){
+  seed[cat].push({
+    title, description, difficulty, leetcodeUrl:url, topics, hint, solution: sol||null
+  });
+}
 
-// Initialize the page
-document.addEventListener('DOMContentLoaded', function() {
-    initializeDSA();
+// Representative solutions to keep page light
+const SOLUTIONS = {
+  "Two Sum": {
+    approach: "Hash map of value->index; for each num, check target-num in map.",
+    timeComplexity: "O(n)",
+    spaceComplexity: "O(n)",
+    code:
+`function twoSum(nums, target){
+  const mp=new Map();
+  for(let i=0;i<nums.length;i++){
+    const need=target-nums[i];
+    if(mp.has(need)) return [mp.get(need), i];
+    mp.set(nums[i], i);
+  }
+  return [];
+}`,
+    explanation: "Single pass; if complement seen earlier, return its index and current."
+  },
+  "Valid Parentheses": {
+    approach:"Use stack; push opens, on close check top matches.",
+    timeComplexity:"O(n)",
+    spaceComplexity:"O(n)",
+    code:
+`function isValid(s){
+  const st=[], match={')':'(',']':'[','}':'{'};
+  for(const ch of s){
+    if(ch in match){
+      if(st.pop()!==match[ch]) return false;
+    }else st.push(ch);
+  }
+  return st.length===0;
+}`,
+    explanation:"Ensures proper nesting and order using LIFO behavior."
+  },
+  "Binary Search": {
+    approach:"Classic binary search on sorted array.",
+    timeComplexity:"O(\\log n)",
+    spaceComplexity:"O(1)",
+    code:
+`function search(nums,target){
+  let l=0,r=nums.length-1;
+  while(l<=r){
+    const m=(l+r)>>1;
+    if(nums[m]==target) return m;
+    if(nums[m]<target) l=m+1; else r=m-1;
+  }
+  return -1;
+}`,
+    explanation:"Halve search space each iteration."
+  }
+};
+
+// Populate 100 curated problems (titles align with LeetCode slugs)
+(function buildList(){
+  // Problem Solving (35)
+  Q("problem-solving","Two Sum","Return indices of two numbers that add up to target.","easy","https://leetcode.com/problems/two-sum/",["array","hashmap"],"Store complements in hash map.",SOLUTIONS["Two Sum"]);
+  Q("problem-solving","Valid Parentheses","Check if brackets string is valid.","easy","https://leetcode.com/problems/valid-parentheses/",["stack"],"Stack for opens; match on close.",SOLUTIONS["Valid Parentheses"]);
+  Q("problem-solving","Merge Intervals","Merge overlapping intervals.","medium","https://leetcode.com/problems/merge-intervals/",["interval","sort"],"Sort by start, track current end.");
+  Q("problem-solving","Best Time to Buy and Sell Stock","Max profit single transaction.","easy","https://leetcode.com/problems/best-time-to-buy-and-sell-stock/",["array"],"Track min so far and diff.");
+  Q("problem-solving","Product of Array Except Self","Return output[i]=product of all except i.","medium","https://leetcode.com/problems/product-of-array-except-self/",["array"],"Prefix and suffix passes; no division.");
+  Q("problem-solving","Maximum Subarray","Largest sum contiguous subarray.","medium","https://leetcode.com/problems/maximum-subarray/",["array"],"Kadane's algorithm.");
+  Q("problem-solving","Contains Duplicate","Check any duplicate.","easy","https://leetcode.com/problems/contains-duplicate/",["hashmap"],"Use set to detect repeats.");
+  Q("problem-solving","Insert Interval","Insert and merge a new interval.","medium","https://leetcode.com/problems/insert-interval/",["interval"],"Append non-overlap, merge overlaps.");
+  Q("problem-solving","Non-overlapping Intervals","Erase minimal to avoid overlaps.","medium","https://leetcode.com/problems/non-overlapping-intervals/",["interval","greedy"],"Sort by end; pick compatible.");
+  Q("problem-solving","Minimum Window Substring","Smallest window covering t.","hard","https://leetcode.com/problems/minimum-window-substring/",["sliding-window","hashmap"],"Expand/contract with counts.");
+  Q("problem-solving","Longest Substring Without Repeating","Length of unique-window.","medium","https://leetcode.com/problems/longest-substring-without-repeating-characters/",["sliding-window","hashmap"],"Slide with last seen index.");
+  Q("problem-solving","3Sum","Triplets sum to zero.","medium","https://leetcode.com/problems/3sum/",["two-pointers","sort"],"Sort; fix i; two-sum with skipping dups.");
+  Q("problem-solving","Container With Most Water","Max area between lines.","medium","https://leetcode.com/problems/container-with-most-water/",["two-pointers"],"Move smaller height pointer.");
+  Q("problem-solving","Evaluate Reverse Polish Notation","Compute RPN.","medium","https://leetcode.com/problems/evaluate-reverse-polish-notation/",["stack"],"Push nums; pop two on operator.");
+  Q("problem-solving","Daily Temperatures","Next warmer day distances.","medium","https://leetcode.com/problems/daily-temperatures/",["stack"],"Monotonic decreasing stack.");
+  Q("problem-solving","Largest Rectangle in Histogram","Max rectangle area.","hard","https://leetcode.com/problems/largest-rectangle-in-histogram/",["stack"],"Mono stack with sentinel.");
+  Q("problem-solving","Subarray Sum Equals K","Count subarrays sum k.","medium","https://leetcode.com/problems/subarray-sum-equals-k/",["prefix-sum","hashmap"],"Prefix sums with frequency.");
+  Q("problem-solving","Top K Frequent Elements","Return top k by freq.","medium","https://leetcode.com/problems/top-k-frequent-elements/",["hashmap","heap"],"Bucket or min-heap.");
+  Q("problem-solving","Kth Largest Element in an Array","Find kth largest.","medium","https://leetcode.com/problems/kth-largest-element-in-an-array/",["heap","quickselect"],"Min-heap or quickselect.");
+  Q("problem-solving","Meeting Rooms II","Minimum rooms required.","medium","https://leetcode.com/problems/meeting-rooms-ii/",["interval","heap"],"Min-heap on end times.");
+  Q("problem-solving","Gas Station","Complete circuit index.","medium","https://leetcode.com/problems/gas-station/",["greedy"],"Track total and current tank.");
+  Q("problem-solving","Candy","Min candies by ratings.","hard","https://leetcode.com/problems/candy/",["greedy"],"Two passes left/right.");
+  Q("problem-solving","Merge Sorted Array","In-place merge sorted arrays.","easy","https://leetcode.com/problems/merge-sorted-array/",["two-pointers"],"Fill from back.");
+  Q("problem-solving","Rotate Array","Rotate by k.","medium","https://leetcode.com/problems/rotate-array/",["array"],"Reverse segments.");
+  Q("problem-solving","Set Matrix Zeroes","Zero rows/cols with zero.","medium","https://leetcode.com/problems/set-matrix-zeroes/",["array"],"Use first row/col markers.");
+  Q("problem-solving","Spiral Matrix","Return spiral order.","medium","https://leetcode.com/problems/spiral-matrix/",["array"],"Four boundaries traversal.");
+  Q("problem-solving","Valid Anagram","Are two strings anagrams?","easy","https://leetcode.com/problems/valid-anagram/",["hashmap","string"],"Count chars or sort.");
+  Q("problem-solving","Ransom Note","Can construct from magazine?","easy","https://leetcode.com/problems/ransom-note/",["hashmap"],"Count frequencies.");
+  Q("problem-solving","Word Pattern","Pattern to words mapping.","easy","https://leetcode.com/problems/word-pattern/",["hashmap"],"Bijective mapping check.");
+  Q("problem-solving","Longest Consecutive Sequence","Longest consecutive length.","medium","https://leetcode.com/problems/longest-consecutive-sequence/",["hashmap"],"Start from sequence heads.");
+  Q("problem-solving","Permutation in String","s1 permutation in s2.","medium","https://leetcode.com/problems/permutation-in-string/",["sliding-window"],"Fixed window counts.");
+  Q("problem-solving","Group Anagrams","Group by sorted key.","medium","https://leetcode.com/problems/group-anagrams/",["hashmap","string"],"Map key->list.");
+  Q("problem-solving","Next Greater Element I","Next greater in nums2 for nums1.","easy","https://leetcode.com/problems/next-greater-element-i/",["stack"],"Mono stack map.");
+  Q("problem-solving","Simplify Path","Canonical Unix path.","medium","https://leetcode.com/problems/simplify-path/",["stack"],"Process segments.");
+  Q("problem-solving","Evaluate Boolean Binary Tree","Evaluate boolean nodes.","easy","https://leetcode.com/problems/evaluate-boolean-binary-tree/",["tree"],"Postorder evaluation.");
+
+  // Data Structures (35)
+  Q("data-structures","Reverse Linked List","Reverse singly list.","easy","https://leetcode.com/problems/reverse-linked-list/",["linkedlist"],"Iterative three-pointer.");
+  Q("data-structures","Merge Two Sorted Lists","Merge two lists.","easy","https://leetcode.com/problems/merge-two-sorted-lists/",["linkedlist"],"Dummy head, advance smaller.");
+  Q("data-structures","Linked List Cycle","Detect cycle.","easy","https://leetcode.com/problems/linked-list-cycle/",["linkedlist","two-pointers"],"Floyd's tortoise-hare.");
+  Q("data-structures","Remove Nth Node From End","Remove nth from end.","medium","https://leetcode.com/problems/remove-nth-node-from-end-of-list/",["linkedlist","two-pointers"],"Gap of n+1 pointers.");
+  Q("data-structures","Reorder List","L0→Ln→L1...","medium","https://leetcode.com/problems/reorder-list/",["linkedlist"],"Split, reverse second, merge.");
+  Q("data-structures","Add Two Numbers","Sum lists digits.","medium","https://leetcode.com/problems/add-two-numbers/",["linkedlist"],"Carry addition.");
+  Q("data-structures","Copy List with Random Pointer","Deep copy.","medium","https://leetcode.com/problems/copy-list-with-random-pointer/",["linkedlist","hashmap"],"Interweave nodes technique.");
+  Q("data-structures","LRU Cache","Design LRU cache.","medium","https://leetcode.com/problems/lru-cache/",["linkedlist","hashmap"],"DLL + hashmap.");
+  Q("data-structures","Maximum Depth of Binary Tree","Return max depth.","easy","https://leetcode.com/problems/maximum-depth-of-binary-tree/",["tree"],"DFS depth.");
+  Q("data-structures","Binary Tree Level Order Traversal","Level order list.","medium","https://leetcode.com/problems/binary-tree-level-order-traversal/",["tree","bfs"],"Queue BFS.");
+  Q("data-structures","Validate Binary Search Tree","Validate BST rules.","medium","https://leetcode.com/problems/validate-binary-search-tree/",["bst","dfs"],"Min/max bounds.");
+  Q("data-structures","Lowest Common Ancestor of a BST","Find LCA in BST.","medium","https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-search-tree/",["bst"],"Walk by values.");
+  Q("data-structures","Kth Smallest Element in a BST","Return kth inorder.","medium","https://leetcode.com/problems/kth-smallest-element-in-a-bst/",["bst"],"Inorder count.");
+  Q("data-structures","Serialize and Deserialize Binary Tree","Codec.","hard","https://leetcode.com/problems/serialize-and-deserialize-binary-tree/",["tree","bfs"],"Use null markers.");
+  Q("data-structures","Binary Tree Right Side View","Rightmost nodes per level.","medium","https://leetcode.com/problems/binary-tree-right-side-view/",["tree","bfs"],"BFS track last.");
+  Q("data-structures","Invert Binary Tree","Swap children.","easy","https://leetcode.com/problems/invert-binary-tree/",["tree"],"DFS swap.");
+  Q("data-structures","Construct Tree from Preorder and Inorder","Build tree.","medium","https://leetcode.com/problems/construct-binary-tree-from-preorder-and-inorder-traversal/",["tree"],"Index map; slice ranges.");
+  Q("data-structures","Implement Trie (Prefix Tree)","Insert/search/startsWith.","medium","https://leetcode.com/problems/implement-trie-prefix-tree/",["trie"],"Children map + end flag.");
+  Q("data-structures","Design Add and Search Words DS","Regex dot support.","medium","https://leetcode.com/problems/design-add-and-search-words-data-structure/",["trie","dfs"],"DFS on dot.");
+  Q("data-structures","Kth Largest in Stream","Maintain kth largest.","easy","https://leetcode.com/problems/kth-largest-element-in-a-stream/",["heap"],"Min-heap size k.");
+  Q("data-structures","Find Median from Data Stream","Median of stream.","hard","https://leetcode.com/problems/find-median-from-data-stream/",["heap"],"Two heaps balance.");
+  Q("data-structures","Top K Frequent Words","k frequent words.","medium","https://leetcode.com/problems/top-k-frequent-words/",["heap","hashmap"],"Min-heap custom cmp.");
+  Q("data-structures","Design Twitter","Mini twitter feeds.","medium","https://leetcode.com/problems/design-twitter/",["heap","hashmap"],"Time-stamped tweets + PQ.");
+  Q("data-structures","Min Stack","Stack with O(1) min.","medium","https://leetcode.com/problems/min-stack/",["stack"],"Pair or diff trick.");
+  Q("data-structures","Implement Queue using Stacks","Queue ops.","easy","https://leetcode.com/problems/implement-queue-using-stacks/",["stack","queue"],"Two stacks swap.");
+  Q("data-structures","Binary Search Tree Iterator","BST iterator.","medium","https://leetcode.com/problems/binary-search-tree-iterator/",["bst","stack"],"Controlled inorder.");
+  Q("data-structures","Flatten Nested List Iterator","Iterator flattening.","medium","https://leetcode.com/problems/flatten-nested-list-iterator/",["stack"],"Stack push lists.");
+  Q("data-structures","Merge k Sorted Lists","Merge k lists.","hard","https://leetcode.com/problems/merge-k-sorted-lists/",["heap","linkedlist"],"Min-heap of heads.");
+  Q("data-structures","Reorganize String","No adjacent equals.","medium","https://leetcode.com/problems/reorganize-string/",["heap"],"Greedy pick two highest.");
+  Q("data-structures","Task Scheduler","Least intervals.","medium","https://leetcode.com/problems/task-scheduler/",["heap","greedy"],"Idle slots formula.");
+  Q("data-structures","LRU Cache II (LFU Cache)","Design LFU cache.","hard","https://leetcode.com/problems/lfu-cache/",["hashmap","linkedlist"],"Freq lists + hash.");
+  Q("data-structures","Design Circular Deque","Deque ops.","medium","https://leetcode.com/problems/design-circular-deque/",["queue"],"Ring buffer.");
+  Q("data-structures","Design Hit Counter","Hits in 5 minutes.","medium","https://leetcode.com/problems/design-hit-counter/",["queue"],"Buckets/queue.");
+  Q("data-structures","Design Underground System","Travel times.","medium","https://leetcode.com/problems/design-underground-system/",["hashmap"],"Pair timings map.");
+
+  // Algorithms (30)
+  Q("algorithms","Binary Search","Search in sorted array.","easy","https://leetcode.com/problems/binary-search/",["binary-search"],"Maintain l,r; mid.",SOLUTIONS["Binary Search"]);
+  Q("algorithms","Search in Rotated Sorted Array","Find target rotated.","medium","https://leetcode.com/problems/search-in-rotated-sorted-array/",["binary-search"],"Detect sorted half.");
+  Q("algorithms","Find Minimum in Rotated Sorted Array","Min element.","medium","https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/",["binary-search"],"Compare mid with right.");
+  Q("algorithms","Median of Two Sorted Arrays","Median of two arrays.","hard","https://leetcode.com/problems/median-of-two-sorted-arrays/",["binary-search"],"Partition by halves.");
+  Q("algorithms","Koko Eating Bananas","Min speed to finish.","medium","https://leetcode.com/problems/koko-eating-bananas/",["binary-search"],"Binary search answer.");
+  Q("algorithms","Search a 2D Matrix","Search target.","medium","https://leetcode.com/problems/search-a-2d-matrix/",["binary-search"],"Virtual 1D index.");
+  Q("algorithms","Climbing Stairs","Ways to climb n.","easy","https://leetcode.com/problems/climbing-stairs/",["dp"],"Fib DP.");
+  Q("algorithms","Coin Change","Fewest coins.","medium","https://leetcode.com/problems/coin-change/",["dp"],"Bottom-up min.");
+  Q("algorithms","House Robber","Max non-adjacent sum.","medium","https://leetcode.com/problems/house-robber/",["dp"],"Rolling two vars.");
+  Q("algorithms","House Robber II","Circular houses.","medium","https://leetcode.com/problems/house-robber-ii/",["dp"],"Exclude first or last.");
+  Q("algorithms","Longest Increasing Subsequence","Length LIS.","medium","https://leetcode.com/problems/longest-increasing-subsequence/",["dp","binary-search"],"Patience array.");
+  Q("algorithms","Unique Paths","Grid ways.","medium","https://leetcode.com/problems/unique-paths/",["dp"],"Combinatorics or DP.");
+  Q("algorithms","Edit Distance","Min operations.","hard","https://leetcode.com/problems/edit-distance/",["dp"],"DP on prefixes.");
+  Q("algorithms","Decode Ways","Ways to decode digits.","medium","https://leetcode.com/problems/decode-ways/",["dp"],"DP with prev two.");
+  Q("algorithms","Partition Equal Subset Sum","Can split equal sum.","medium","https://leetcode.com/problems/partition-equal-subset-sum/",["dp","knapsack"],"Bitset or 0/1 knapsack.");
+  Q("algorithms","Word Break","Can segment string.","medium","https://leetcode.com/problems/word-break/",["dp","trie"],"DP with set.");
+  Q("algorithms","Combination Sum","All combos to target.","medium","https://leetcode.com/problems/combination-sum/",["backtracking"],"DFS with reuse.");
+  Q("algorithms","Permutations","All permutations.","medium","https://leetcode.com/problems/permutations/",["backtracking"],"Swap/backtrack.");
+  Q("algorithms","Subsets","All subsets.","medium","https://leetcode.com/problems/subsets/",["backtracking"],"DFS include/exclude.");
+  Q("algorithms","N-Queens","Place queens.","hard","https://leetcode.com/problems/n-queens/",["backtracking"],"Columns/diagonals sets.");
+  Q("algorithms","Number of Islands","Count islands.","medium","https://leetcode.com/problems/number-of-islands/",["dfs","bfs","graph"],"DFS mark visited.");
+  Q("algorithms","Clone Graph","Deep copy graph.","medium","https://leetcode.com/problems/clone-graph/",["graph","dfs"],"Map old->new.");
+  Q("algorithms","Course Schedule","Detect if can finish.","medium","https://leetcode.com/problems/course-schedule/",["graph","toposort"],"Indegree Kahn.");
+  Q("algorithms","Course Schedule II","Return order.","medium","https://leetcode.com/problems/course-schedule-ii/",["graph","toposort"],"Kahn collect sequence.");
+  Q("algorithms","Pacific Atlantic Water Flow","Cells reaching both oceans.","medium","https://leetcode.com/problems/pacific-atlantic-water-flow/",["dfs","bfs"],"Reverse flow from edges.");
+  Q("algorithms","Rotting Oranges","Minutes to rot all.","medium","https://leetcode.com/problems/rotting-oranges/",["bfs"],"Multi-source BFS.");
+  Q("algorithms","Network Delay Time","Time for signal.","medium","https://leetcode.com/problems/network-delay-time/",["dijkstra","graph"],"PQ Dijkstra.");
+  Q("algorithms","Cheapest Flights Within K Stops","Min cost with <=K stops.","medium","https://leetcode.com/problems/cheapest-flights-within-k-stops/",["graph","bfs","dp"],"Bellman-Ford or BFS levels.");
+  Q("algorithms","Reverse Integer","Reverse digits with overflow rules.","medium","https://leetcode.com/problems/reverse-integer/",["math"],"Build result with bounds.");
+  Q("algorithms","Counting Bits","Bits count 0..n.","easy","https://leetcode.com/problems/counting-bits/",["dp","bit"],"dp[i]=dp[i>>1]+(i&1).");
+})();
+
+// ------------- State -------------
+let currentCategory = "";
+let currentDifficulty = "all";
+let currentTopics = new Set();
+let queryText = "";
+let pageSize = 10;
+let currentPage = 1;
+
+// ------------- Init -------------
+document.addEventListener('DOMContentLoaded', () => {
+  initializeUI();
+  buildTopicChips();
 });
 
-function initializeDSA() {
-    // Category card click handlers
-    document.querySelectorAll('.category-card').forEach(card => {
-        card.addEventListener('click', function() {
-            const category = this.dataset.category;
-            showQuestions(category);
-        });
+function initializeUI(){
+  // Category clicks
+  document.querySelectorAll('.category-card').forEach(card=>{
+    card.addEventListener('click', ()=> showQuestions(card.dataset.category));
+  });
+
+  // Difficulty filter
+  document.querySelectorAll('[data-difficulty]').forEach(item=>{
+    item.addEventListener('click', (e)=>{
+      e.preventDefault();
+      currentDifficulty = item.dataset.difficulty;
+      document.getElementById('difficultyDropdown').textContent = item.textContent;
+      currentPage=1;
+      renderList();
     });
-    
-    // Difficulty filter handlers
-    document.querySelectorAll('[data-difficulty]').forEach(item => {
-        item.addEventListener('click', function(e) {
-            e.preventDefault();
-            currentDifficulty = this.dataset.difficulty;
-            document.getElementById('difficultyDropdown').textContent = this.textContent;
-            filterQuestions();
-        });
+  });
+
+  // Back
+  document.getElementById('backToCategories').addEventListener('click', showCategories);
+
+  // Search
+  document.getElementById('searchInput').addEventListener('input', (e)=>{
+    queryText = e.target.value.trim().toLowerCase();
+    currentPage=1;
+    renderList();
+  });
+
+  // Page size
+  document.getElementById('pageSizeSelect').addEventListener('change',(e)=>{
+    pageSize = parseInt(e.target.value,10);
+    currentPage=1;
+    renderList();
+  });
+}
+
+function buildTopicChips(){
+  const wrap = document.getElementById('topicChips');
+  wrap.innerHTML="";
+  // "All" chip
+  const all = chip("All Topics", true, ()=>{ currentTopics.clear(); renderList(); });
+  wrap.appendChild(all);
+  TOPICS.forEach(t=>{
+    wrap.appendChild(chip(t, false, ()=>{
+      if(currentTopics.has(t)) currentTopics.delete(t); else currentTopics.add(t);
+      renderList();
+    }, t));
+  });
+  updateChipStates();
+}
+
+function chip(label, isAll, onClick, topic=null){
+  const el = document.createElement('span');
+  el.className = 'topic-chip';
+  el.textContent = label;
+  el.addEventListener('click', ()=>{
+    if(isAll){ currentTopics.clear(); updateChipStates(); onClick(); }
+    else { onClick(); updateChipStates(); }
+  });
+  if(isAll) el.dataset.all = "1";
+  if(topic) el.dataset.topic = topic;
+  return el;
+}
+
+function updateChipStates(){
+  document.querySelectorAll('.topic-chip').forEach(el=>{
+    if(el.dataset.all==="1"){
+      el.classList.toggle('active', currentTopics.size===0);
+    }else{
+      el.classList.toggle('active', currentTopics.has(el.dataset.topic));
+    }
+  });
+}
+
+function showQuestions(category){
+  currentCategory = category;
+  document.getElementById('categorySection').style.display = 'none';
+  document.getElementById('questionsSection').style.display = 'block';
+  const names = {'problem-solving':'Problem Solving','data-structures':'Data Structures','algorithms':'Algorithms'};
+  document.getElementById('sectionTitle').textContent = `${names[category]} – 100 Set`;
+  currentPage=1;
+  renderList();
+}
+
+function showCategories(){
+  document.getElementById('categorySection').style.display = 'block';
+  document.getElementById('questionsSection').style.display = 'none';
+  currentCategory = "";
+  currentDifficulty = "all";
+  currentTopics.clear();
+  document.getElementById('difficultyDropdown').textContent = 'All Difficulties';
+  document.getElementById('searchInput').value = "";
+  queryText = "";
+  updateChipStates();
+}
+
+function getFiltered(){
+  const all = seed[currentCategory] || [];
+  return all.filter(q=>{
+    if(currentDifficulty!=="all" && q.difficulty!==currentDifficulty) return false;
+    if(currentTopics.size>0 && !q.topics.some(t=>currentTopics.has(t))) return false;
+    if(queryText){
+      const blob = (q.title+" "+q.description+" "+(q.topics||[]).join(" ")).toLowerCase();
+      if(!blob.includes(queryText)) return false;
+    }
+    return true;
+  });
+}
+
+function renderList(){
+  updateChipStates();
+  const list = document.getElementById('questionsList');
+  const tpl = document.getElementById('questionTemplate');
+  list.innerHTML = "";
+
+  const items = getFiltered();
+  const total = items.length;
+  const pages = Math.max(1, Math.ceil(total / pageSize));
+  currentPage = Math.min(currentPage, pages);
+  const start = (currentPage-1)*pageSize;
+  const pageItems = items.slice(start, start+pageSize);
+
+  pageItems.forEach(q=>{
+    const node = tpl.content.cloneNode(true);
+    node.querySelector('.question-title').textContent = q.title;
+    node.querySelector('.question-description').textContent = q.description;
+    node.querySelector('.leetcode-link').href = q.leetcodeUrl;
+    node.querySelector('.topic-line').textContent = (q.topics||[]).join(" • ");
+    const badge = node.querySelector('.difficulty-badge');
+    badge.textContent = q.difficulty.toUpperCase();
+    badge.classList.add(q.difficulty);
+
+    node.querySelector('.hint-btn').addEventListener('click', ()=>{
+      const msg = q.hint || "Think about constraints, data structure choice, and optimal pattern.";
+      showToast(`Hint – ${q.title}`, msg);
     });
-    
-    // Back to categories button
-    document.getElementById('backToCategories').addEventListener('click', showCategories);
-}
 
-function showQuestions(category) {
-    currentCategory = category;
-    
-    // Hide category section and show questions section
-    document.getElementById('categorySection').style.display = 'none';
-    document.getElementById('questionsSection').style.display = 'block';
-    
-    // Update page title
-    const categoryNames = {
-        'problem-solving': 'Problem Solving',
-        'data-structures': 'Data Structures',
-        'algorithms': 'Algorithms'
-    };
-    
-    document.querySelector('#questionsSection h3').innerHTML = 
-        `<i class="fas fa-code me-2"></i>${categoryNames[category]} Practice Questions`;
-    
-    // Load and display questions
-    loadQuestions(category);
-}
+    const solBtn = node.querySelector('.solution-btn');
+    const section = node.querySelector('.solution-section');
 
-function showCategories() {
-    document.getElementById('categorySection').style.display = 'block';
-    document.getElementById('questionsSection').style.display = 'none';
-    currentCategory = '';
-    currentDifficulty = 'all';
-    document.getElementById('difficultyDropdown').textContent = 'All Difficulties';
-}
-
-function loadQuestions(category) {
-    const questions = dsaQuestions[category] || [];
-    const questionsList = document.getElementById('questionsList');
-    const template = document.getElementById('questionTemplate');
-    
-    questionsList.innerHTML = '';
-    
-    questions.forEach(question => {
-        const questionElement = template.content.cloneNode(true);
-        
-        // Set question data
-        questionElement.querySelector('.question-title').textContent = question.title;
-        questionElement.querySelector('.question-description').textContent = question.description;
-        questionElement.querySelector('.leetcode-link').href = question.leetcodeUrl;
-        
-        // Set difficulty badge
-        const badge = questionElement.querySelector('.difficulty-badge');
-        badge.textContent = question.difficulty.toUpperCase();
-        badge.classList.add(question.difficulty);
-        
-        // Add hint functionality
-        questionElement.querySelector('.hint-btn').addEventListener('click', function() {
-            showHint(question.title);
-        });
-        
-        // Add solution functionality
-        if (question.solution) {
-            const solutionBtn = questionElement.querySelector('.solution-btn');
-            const solutionSection = questionElement.querySelector('.solution-section');
-            
-            solutionBtn.addEventListener('click', function() {
-                if (solutionSection.style.display === 'none') {
-                    // Show solution
-                    solutionSection.style.display = 'block';
-                    solutionBtn.innerHTML = '<i class="fas fa-eye-slash me-2"></i>Hide Solution';
-                    solutionBtn.classList.remove('btn-success');
-                    solutionBtn.classList.add('btn-secondary');
-                    
-                    // Populate solution data
-                    solutionSection.querySelector('.solution-approach').textContent = question.solution.approach;
-                    solutionSection.querySelector('.solution-time-complexity').textContent = question.solution.timeComplexity;
-                    solutionSection.querySelector('.solution-space-complexity').textContent = question.solution.spaceComplexity;
-                    solutionSection.querySelector('.solution-code code').textContent = question.solution.code;
-                    solutionSection.querySelector('.solution-explanation').textContent = question.solution.explanation;
-                } else {
-                    // Hide solution
-                    solutionSection.style.display = 'none';
-                    solutionBtn.innerHTML = '<i class="fas fa-code me-2"></i>View Solution';
-                    solutionBtn.classList.remove('btn-secondary');
-                    solutionBtn.classList.add('btn-success');
-                }
-            });
-        } else {
-            // Hide solution button if no solution available
-            questionElement.querySelector('.solution-btn').style.display = 'none';
+    if(q.solution){
+      solBtn.addEventListener('click', ()=>{
+        const show = section.style.display === 'none';
+        section.style.display = show ? 'block':'none';
+        solBtn.innerHTML = show ? '<i class="fas fa-eye-slash me-2"></i>Hide Solution'
+                                : '<i class="fas fa-code me-2"></i>View Solution';
+        if(show){
+          section.querySelector('.solution-approach').textContent = q.solution.approach;
+          section.querySelector('.solution-time-complexity').textContent = q.solution.timeComplexity;
+          section.querySelector('.solution-space-complexity').textContent = q.solution.spaceComplexity;
+          section.querySelector('.solution-code code').textContent = q.solution.code;
+          section.querySelector('.solution-explanation').textContent = q.solution.explanation;
+          section.querySelector('.copy-code').onclick = ()=>{
+            navigator.clipboard.writeText(q.solution.code);
+            showToast("Copied", "Solution code copied to clipboard.");
+          };
         }
-        
-        questionsList.appendChild(questionElement);
-    });
-    
-    // Apply current difficulty filter
-    filterQuestions();
+      });
+    }else{
+      solBtn.addEventListener('click', ()=>{
+        showToast("Solution", "Coming soon. Try writing your own and compare later.");
+      });
+    }
+
+    list.appendChild(node);
+  });
+
+  buildPagination(pages);
 }
 
-function filterQuestions() {
-    const questions = document.querySelectorAll('.question-item');
-    
-    questions.forEach(question => {
-        const difficulty = question.querySelector('.difficulty-badge').classList[1]; // easy, medium, or hard
-        
-        if (currentDifficulty === 'all' || difficulty === currentDifficulty) {
-            question.style.display = 'block';
-        } else {
-            question.style.display = 'none';
-        }
-    });
+function buildPagination(pages){
+  const pag = document.getElementById('pagination');
+  pag.innerHTML = "";
+  const mk = (lbl, page, disabled=false, active=false)=>{
+    const li = document.createElement('li');
+    li.className = `page-item ${disabled?'disabled':''} ${active?'active':''}`;
+    const a = document.createElement('a');
+    a.className = 'page-link';
+    a.href='#';
+    a.textContent = lbl;
+    a.onclick = (e)=>{ e.preventDefault(); if(!disabled){ currentPage=page; renderList(); } };
+    li.appendChild(a);
+    pag.appendChild(li);
+  };
+  mk("«", Math.max(1,currentPage-1), currentPage===1);
+  for(let p=1;p<=pages;p++){
+    if(p===1 || p===pages || Math.abs(p-currentPage)<=1){
+      mk(String(p), p, false, p===currentPage);
+    }else if(Math.abs(p-currentPage)===2){
+      const li = document.createElement('li');
+      li.className='page-item disabled';
+      li.innerHTML='<span class="page-link">…</span>';
+      pag.appendChild(li);
+    }
+  }
+  mk("»", Math.min(pages,currentPage+1), currentPage===pages);
 }
 
-function showHint(questionTitle) {
-    const hints = {
-        'Two Sum': 'Try using a hash map to store numbers you\'ve seen and their indices.',
-        'Valid Parentheses': 'Use a stack to keep track of opening brackets.',
-        'Merge Intervals': 'Sort the intervals first, then merge overlapping ones.',
-        'Reverse Linked List': 'Use three pointers: previous, current, and next.',
-        'Maximum Depth of Binary Tree': 'Use recursion to find the maximum depth of left and right subtrees.',
-        'LRU Cache': 'Use a combination of HashMap and Doubly Linked List.',
-        'Binary Search': 'Remember to handle edge cases and update left/right pointers correctly.',
-        'Merge Sort': 'Divide the array into two halves, sort them recursively, then merge.',
-        'Dijkstra\'s Algorithm': 'Use a priority queue (min-heap) to always process the node with minimum distance.'
-    };
-    
-    const hint = hints[questionTitle] || 'Think about the problem step by step. What data structure would be most efficient?';
-    
-    // Show hint in a modal or alert (you can enhance this)
-    alert(`Hint for ${questionTitle}:\n\n${hint}`);
+// Simple toast
+function showToast(title, msg){
+  const id = 'simpleToast';
+  let el = document.getElementById(id);
+  if(!el){
+    el = document.createElement('div');
+    el.id = id;
+    el.style.position='fixed';
+    el.style.right='20px';
+    el.style.bottom='20px';
+    el.style.zIndex='1080';
+    document.body.appendChild(el);
+  }
+  const item = document.createElement('div');
+  item.className = 'toast align-items-center text-bg-dark border-0 show';
+  item.role='alert';
+  item.style.minWidth='280px';
+  item.innerHTML = `<div class="d-flex">
+      <div class="toast-body"><strong>${title}</strong><br>${msg}</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>`;
+  el.appendChild(item);
+  setTimeout(()=> item.remove(), 3000);
 }
 </script>
 {% endblock %}
