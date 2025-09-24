@@ -74,6 +74,11 @@
           <option value="15">15 / page</option>
           <option value="20">20 / page</option>
         </select>
+        <select id="langSelect" class="form-select" style="width:140px;">
+        <option value="JavaScript" selected>JavaScript</option>
+        <option value="Python">Python</option>
+        <option value="C++">C++</option>
+        </select>
       </div>
     </div>
 
@@ -501,10 +506,80 @@ function renderList(){
         }
       });
     }else{
-      solBtn.addEventListener('click', ()=>{
-        showToast("Solution", "Coming soon. Try writing your own and compare later.");
-      });
+  solBtn.addEventListener('click', async ()=>{
+    const section = node.querySelector('.solution-section');
+    const lang = (document.getElementById('langSelect')?.value) || 'JavaScript';
+
+    if (q.solution && section.style.display === 'block') {
+      section.style.display = 'none';
+      solBtn.innerHTML = '<i class="fas fa-code me-2"></i>View Solution';
+      return;
     }
+    if (q.solution && section.style.display !== 'block') {
+      section.style.display = 'block';
+      solBtn.innerHTML = '<i class="fas fa-eye-slash me-2"></i>Hide Solution';
+      section.querySelector('.solution-approach').textContent = q.solution.approach;
+      section.querySelector('.solution-time-complexity').textContent = q.solution.timeComplexity;
+      section.querySelector('.solution-space-complexity').textContent = q.solution.spaceComplexity;
+      section.querySelector('.solution-code code').textContent = q.solution.code;
+      section.querySelector('.solution-explanation').textContent = q.solution.explanation;
+      section.querySelector('.copy-code').onclick = ()=>{
+        navigator.clipboard.writeText(q.solution.code);
+        showToast("Copied", "Solution code copied to clipboard.");
+      };
+      return;
+    }
+
+    const prev = solBtn.innerHTML;
+    solBtn.disabled = true;
+    solBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating...';
+
+    try {
+      const res = await fetch('/api/gemini/solve', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          title: q.title,
+          description: q.description,
+          topics: q.topics || [],
+          language: lang
+        })
+      });
+      const data = await res.json();
+      if(!data.ok){
+        showToast("AI Solution Error", data.error || "Failed to generate");
+        solBtn.innerHTML = prev;
+        return;
+      }
+      q.solution = {
+        approach: data.solution.approach,
+        timeComplexity: data.solution.timeComplexity,
+        spaceComplexity: data.solution.spaceComplexity,
+        code: data.solution.code,
+        explanation: data.solution.explanation
+      };
+
+      section.style.display = 'block';
+      solBtn.innerHTML = '<i class="fas fa-eye-slash me-2"></i>Hide Solution';
+      section.querySelector('.solution-approach').textContent = q.solution.approach;
+      section.querySelector('.solution-time-complexity').textContent = q.solution.timeComplexity;
+      section.querySelector('.solution-space-complexity').textContent = q.solution.spaceComplexity;
+      section.querySelector('.solution-code code').textContent = q.solution.code;
+      section.querySelector('.solution-explanation').textContent = q.solution.explanation;
+      section.querySelector('.copy-code').onclick = ()=>{
+        navigator.clipboard.writeText(q.solution.code);
+        showToast("Copied", "Solution code copied to clipboard.");
+      };
+    } catch (e){
+      console.error(e);
+      showToast("AI Solution Error", "Network or server error.");
+      solBtn.innerHTML = prev;
+    } finally {
+      solBtn.disabled = false;
+    }
+  });
+}
+
 
     list.appendChild(node);
   });

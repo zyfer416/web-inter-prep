@@ -418,6 +418,12 @@ def api_roadmap():
     except Exception as e:
         return jsonify({'error': f'Unexpected error: {e}'}), 500
 
+@app.route("/dsa")
+def dsa():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+    return render_template("practice.html") 
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     """Login page and authentication"""
@@ -646,14 +652,12 @@ def load_questions():
         print('Error loading questions:', e)
         return []
 
-@app.route('/practice')
-def practice():
-    """DSA Practice mode - show categories and practice questions"""
-    if 'user_id' not in session:
-        flash('Please login to access practice mode', 'error')
-        return redirect(url_for('login'))
-    
-    return render_template('practice.html')
+@app.route("/practice")
+def practice_page():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+    return render_template("practice.html")
+
 
 @app.route('/dsa')
 def dsa():
