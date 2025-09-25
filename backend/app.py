@@ -647,11 +647,11 @@ def load_questions():
         print('Error loading questions:', e)
         return []
 
-@app.route("/practice")
-def practice_page():
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-    return render_template("practice_page")
+# @app.route("/practice")
+# def practice_page():
+#     if "user_id" not in session:
+#         return redirect(url_for("login"))
+#     return render_template("practice_page")
 
 @app.route("/practice")
 def practice_page():
