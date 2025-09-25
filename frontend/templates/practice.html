@@ -10,7 +10,6 @@
 </div>
 
 <div class="container py-5">
-  <!-- Category cards -->
   <div id="categorySection">
     <div class="row justify-content-center">
       <div class="col-lg-4 mb-4">
@@ -51,7 +50,6 @@
     </div>
   </div>
 
-  <!-- Questions -->
   <div id="questionsSection" style="display:none;">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
       <h3 class="mb-0"><i class="fas fa-code me-2"></i><span id="sectionTitle">Practice Questions</span></h3>
@@ -75,17 +73,14 @@
           <option value="20">20 / page</option>
         </select>
         <select id="langSelect" class="form-select" style="width:140px;">
-        <option value="JavaScript" selected>JavaScript</option>
-        <option value="Python">Python</option>
-        <option value="C++">C++</option>
+          <option value="JavaScript" selected>JavaScript</option>
+          <option value="Python">Python</option>
+          <option value="C++">C++</option>
         </select>
       </div>
     </div>
 
-    <!-- Topic chips -->
-    <div id="topicChips" class="mb-3 d-flex flex-wrap gap-2">
-      <!-- chips injected -->
-    </div>
+    <div id="topicChips" class="mb-3 d-flex flex-wrap gap-2"></div>
 
     <div class="card shadow-sm">
       <div class="card-body p-0">
@@ -96,15 +91,12 @@
     <div class="d-flex justify-content-between align-items-center mt-3">
       <button class="btn btn-outline-secondary" id="backToCategories"><i class="fas fa-arrow-left me-2"></i>Back</button>
       <nav>
-        <ul class="pagination mb-0" id="pagination">
-          <!-- pages -->
-        </ul>
+        <ul class="pagination mb-0" id="pagination"></ul>
       </nav>
     </div>
   </div>
 </div>
 
-<!-- Template -->
 <template id="questionTemplate">
   <div class="question-item p-4 border-bottom">
     <div class="d-flex justify-content-between align-items-start mb-2">
@@ -161,27 +153,17 @@
 // ------------- Data (100 items) -------------
 const TOPICS = ["array","string","hashmap","two-pointers","sliding-window","stack","queue","linkedlist","tree","bst","heap","greedy"];
 
-const seed = {
-  "problem-solving": [],
-  "data-structures": [],
-  "algorithms": []
-};
+const seed = { "problem-solving": [], "data-structures": [], "algorithms": [] };
 
-// Helper to push question
 function Q(cat, title, description, difficulty, url, topics, hint, sol){
-  seed[cat].push({
-    title, description, difficulty, leetcodeUrl:url, topics, hint, solution: sol||null
-  });
+  seed[cat].push({ title, description, difficulty, leetcodeUrl:url, topics, hint, solution: sol||null });
 }
 
-// Representative solutions to keep page light
 const SOLUTIONS = {
   "Two Sum": {
-    approach: "Hash map of value->index; for each num, check target-num in map.",
-    timeComplexity: "O(n)",
-    spaceComplexity: "O(n)",
-    code:
-`function twoSum(nums, target){
+    approach:"Hash map of value->index; for each num, check target-num in map.",
+    timeComplexity:"O(n)", spaceComplexity:"O(n)",
+    code:`function twoSum(nums, target){
   const mp=new Map();
   for(let i=0;i<nums.length;i++){
     const need=target-nums[i];
@@ -189,15 +171,12 @@ const SOLUTIONS = {
     mp.set(nums[i], i);
   }
   return [];
-}`,
-    explanation: "Single pass; if complement seen earlier, return its index and current."
+}`, explanation:"Single pass; if complement seen earlier, return its index and current."
   },
   "Valid Parentheses": {
     approach:"Use stack; push opens, on close check top matches.",
-    timeComplexity:"O(n)",
-    spaceComplexity:"O(n)",
-    code:
-`function isValid(s){
+    timeComplexity:"O(n)", spaceComplexity:"O(n)",
+    code:`function isValid(s){
   const st=[], match={')':'(',']':'[','}':'{'};
   for(const ch of s){
     if(ch in match){
@@ -205,15 +184,12 @@ const SOLUTIONS = {
     }else st.push(ch);
   }
   return st.length===0;
-}`,
-    explanation:"Ensures proper nesting and order using LIFO behavior."
+}`, explanation:"Ensures proper nesting and order using LIFO behavior."
   },
   "Binary Search": {
     approach:"Classic binary search on sorted array.",
-    timeComplexity:"O(\\log n)",
-    spaceComplexity:"O(1)",
-    code:
-`function search(nums,target){
+    timeComplexity:"O(\\log n)", spaceComplexity:"O(1)",
+    code:`function search(nums,target){
   let l=0,r=nums.length-1;
   while(l<=r){
     const m=(l+r)>>1;
@@ -221,8 +197,7 @@ const SOLUTIONS = {
     if(nums[m]<target) l=m+1; else r=m-1;
   }
   return -1;
-}`,
-    explanation:"Halve search space each iteration."
+}`, explanation:"Halve search space each iteration."
   }
 };
 
@@ -349,44 +324,31 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initializeUI(){
-  // Category clicks
   document.querySelectorAll('.category-card').forEach(card=>{
     card.addEventListener('click', ()=> showQuestions(card.dataset.category));
   });
-
-  // Difficulty filter
   document.querySelectorAll('[data-difficulty]').forEach(item=>{
     item.addEventListener('click', (e)=>{
       e.preventDefault();
       currentDifficulty = item.dataset.difficulty;
       document.getElementById('difficultyDropdown').textContent = item.textContent;
-      currentPage=1;
-      renderList();
+      currentPage=1; renderList();
     });
   });
-
-  // Back
   document.getElementById('backToCategories').addEventListener('click', showCategories);
-
-  // Search
   document.getElementById('searchInput').addEventListener('input', (e)=>{
     queryText = e.target.value.trim().toLowerCase();
-    currentPage=1;
-    renderList();
+    currentPage=1; renderList();
   });
-
-  // Page size
   document.getElementById('pageSizeSelect').addEventListener('change',(e)=>{
     pageSize = parseInt(e.target.value,10);
-    currentPage=1;
-    renderList();
+    currentPage=1; renderList();
   });
 }
 
 function buildTopicChips(){
   const wrap = document.getElementById('topicChips');
   wrap.innerHTML="";
-  // "All" chip
   const all = chip("All Topics", true, ()=>{ currentTopics.clear(); renderList(); });
   wrap.appendChild(all);
   TOPICS.forEach(t=>{
@@ -427,19 +389,15 @@ function showQuestions(category){
   document.getElementById('questionsSection').style.display = 'block';
   const names = {'problem-solving':'Problem Solving','data-structures':'Data Structures','algorithms':'Algorithms'};
   document.getElementById('sectionTitle').textContent = `${names[category]} – 100 Set`;
-  currentPage=1;
-  renderList();
+  currentPage=1; renderList();
 }
 
 function showCategories(){
   document.getElementById('categorySection').style.display = 'block';
   document.getElementById('questionsSection').style.display = 'none';
-  currentCategory = "";
-  currentDifficulty = "all";
-  currentTopics.clear();
+  currentCategory = ""; currentDifficulty = "all"; currentTopics.clear();
   document.getElementById('difficultyDropdown').textContent = 'All Difficulties';
-  document.getElementById('searchInput').value = "";
-  queryText = "";
+  document.getElementById('searchInput').value = ""; queryText = "";
   updateChipStates();
 }
 
@@ -505,81 +463,68 @@ function renderList(){
           };
         }
       });
-    }else{
-  solBtn.addEventListener('click', async ()=>{
-    const section = node.querySelector('.solution-section');
-    const lang = (document.getElementById('langSelect')?.value) || 'JavaScript';
+    } else {
+      solBtn.addEventListener('click', async ()=>{
+        const lang = (document.getElementById('langSelect')?.value) || 'JavaScript';
 
-    if (q.solution && section.style.display === 'block') {
-      section.style.display = 'none';
-      solBtn.innerHTML = '<i class="fas fa-code me-2"></i>View Solution';
-      return;
-    }
-    if (q.solution && section.style.display !== 'block') {
-      section.style.display = 'block';
-      solBtn.innerHTML = '<i class="fas fa-eye-slash me-2"></i>Hide Solution';
-      section.querySelector('.solution-approach').textContent = q.solution.approach;
-      section.querySelector('.solution-time-complexity').textContent = q.solution.timeComplexity;
-      section.querySelector('.solution-space-complexity').textContent = q.solution.spaceComplexity;
-      section.querySelector('.solution-code code').textContent = q.solution.code;
-      section.querySelector('.solution-explanation').textContent = q.solution.explanation;
-      section.querySelector('.copy-code').onclick = ()=>{
-        navigator.clipboard.writeText(q.solution.code);
-        showToast("Copied", "Solution code copied to clipboard.");
-      };
-      return;
-    }
+        if (section.style.display === 'block') {
+          section.style.display = 'none';
+          solBtn.innerHTML = '<i class="fas fa-code me-2"></i>View Solution';
+          solBtn.classList.remove('btn-secondary');
+          solBtn.classList.add('btn-success');
+          return;
+        }
 
-    const prev = solBtn.innerHTML;
-    solBtn.disabled = true;
-    solBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating...';
+        const prev = solBtn.innerHTML;
+        solBtn.disabled = true;
+        solBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating...';
 
-    try {
-      const res = await fetch('/api/gemini/solve', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({
-          title: q.title,
-          description: q.description,
-          topics: q.topics || [],
-          language: lang
-        })
+        try {
+          const res = await fetch('/api/gemini/solve', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({
+              title: q.title,
+              description: q.description,
+              topics: q.topics || [],
+              language: lang
+            })
+          });
+          const data = await res.json();
+          if(!data.ok) throw new Error(data.error || "Failed to generate");
+
+          q.solution = {
+            approach: data.solution.approach,
+            timeComplexity: data.solution.timeComplexity,
+            spaceComplexity: data.solution.spaceComplexity,
+            code: data.solution.code,
+            explanation: data.solution.explanation
+          };
+
+          section.style.display = 'block';
+          solBtn.innerHTML = '<i class="fas fa-eye-slash me-2"></i>Hide Solution';
+          solBtn.classList.remove('btn-success');
+          solBtn.classList.add('btn-secondary');
+
+          section.querySelector('.solution-approach').textContent = q.solution.approach;
+          section.querySelector('.solution-time-complexity').textContent = q.solution.timeComplexity;
+          section.querySelector('.solution-space-complexity').textContent = q.solution.spaceComplexity;
+          section.querySelector('.solution-code code').textContent = q.solution.code;
+          section.querySelector('.solution-explanation').textContent = q.solution.explanation;
+          section.querySelector('.copy-code').onclick = ()=>{
+            navigator.clipboard.writeText(q.solution.code);
+            showToast("Copied", "Solution code copied to clipboard.");
+          };
+        } catch (e){
+          console.error(e);
+          showToast("AI Solution Error", e.message || "Network or server error.");
+          section.style.display = 'none';
+          solBtn.innerHTML = prev;
+        } finally {
+          solBtn.disabled = false;
+        }
       });
-      const data = await res.json();
-      if(!data.ok){
-        showToast("AI Solution Error", data.error || "Failed to generate");
-        solBtn.innerHTML = prev;
-        return;
-      }
-      q.solution = {
-        approach: data.solution.approach,
-        timeComplexity: data.solution.timeComplexity,
-        spaceComplexity: data.solution.spaceComplexity,
-        code: data.solution.code,
-        explanation: data.solution.explanation
-      };
-
-      section.style.display = 'block';
-      solBtn.innerHTML = '<i class="fas fa-eye-slash me-2"></i>Hide Solution';
-      section.querySelector('.solution-approach').textContent = q.solution.approach;
-      section.querySelector('.solution-time-complexity').textContent = q.solution.timeComplexity;
-      section.querySelector('.solution-space-complexity').textContent = q.solution.spaceComplexity;
-      section.querySelector('.solution-code code').textContent = q.solution.code;
-      section.querySelector('.solution-explanation').textContent = q.solution.explanation;
-      section.querySelector('.copy-code').onclick = ()=>{
-        navigator.clipboard.writeText(q.solution.code);
-        showToast("Copied", "Solution code copied to clipboard.");
-      };
-    } catch (e){
-      console.error(e);
-      showToast("AI Solution Error", "Network or server error.");
-      solBtn.innerHTML = prev;
-    } finally {
-      solBtn.disabled = false;
     }
-  });
-}
-
 
     list.appendChild(node);
   });
@@ -615,7 +560,6 @@ function buildPagination(pages){
   mk("»", Math.min(pages,currentPage+1), currentPage===pages);
 }
 
-// Simple toast
 function showToast(title, msg){
   const id = 'simpleToast';
   let el = document.getElementById(id);

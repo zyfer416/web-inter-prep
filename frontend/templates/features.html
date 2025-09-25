@@ -44,7 +44,7 @@
                     <i class="fas fa-code text-success display-4 mb-3"></i>
                     <h5 class="card-title">DSA Practice</h5>
                     <p class="card-text">Master Data Structures and Algorithms with our comprehensive question bank. Practice coding problems and system design.</p>
-                    <a href="{{ url_for('practice') if session.user_id else url_for('login') }}" class="btn btn-success">
+                    <a href="{{ url_for('practice_page') if session.user_id else url_for('login') }}" class="btn btn-success">
                         <i class="fas fa-code me-2"></i>Start Practicing
                     </a>
                 </div>
@@ -72,9 +72,10 @@
                     <i class="fas fa-file-alt text-warning display-4 mb-3"></i>
                     <h5 class="card-title">Resume Builder</h5>
                     <p class="card-text">Create professional resumes with our AI-powered builder. Get tips and suggestions to make your resume stand out.</p>
-                    <button class="btn btn-warning" onclick="showComingSoon('Resume Builder')" disabled>
-                        <i class="fas fa-clock me-2"></i>Coming Soon
-                    </button>
+                    <a class="btn btn-success" href="{{ url_for('resources') }}">
+  <i class="fas fa-wand-magic me-2"></i>Open Resume Builder
+</a>
+
                 </div>
             </div>
         </div>

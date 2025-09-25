@@ -66,13 +66,15 @@
                                                        <li><a class="dropdown-item" href="#">
                                <i class="fas fa-robot me-2"></i>AI Interview <span class="badge bg-warning text-dark ms-2">Coming Soon</span>
                            </a></li>
-                                                       <li><a class="dropdown-item" href="#">
-                               <i class="fas fa-file-alt me-2"></i>Resume <span class="badge bg-warning text-dark ms-2">Coming Soon</span>
+<li><a class="dropdown-item {% if request.endpoint=='resume' %}active{% endif %}" href="{{ url_for('resources') }}">
+  <i class="fas fa-file-alt me-2"></i>Resume
+</a></li>
+
                            </a></li>
                                                        <li><a class="dropdown-item" href="#">
                                <i class="fas fa-calendar-check me-2"></i>Calendar <span class="badge bg-warning text-dark ms-2">Coming Soon</span>
                            </a></li>
-                                                       <li><a class="dropdown-item" href="{{ url_for('dsa') }}">
+                                                       <li><a class="dropdown-item" href="{{ url_for('practice_page') }}">
                                <i class="fas fa-code me-2"></i>DSA
                            </a></li>
                                                        <li><a class="dropdown-item" href="{{ url_for('resources') }}">

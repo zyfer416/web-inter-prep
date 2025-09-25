@@ -418,11 +418,6 @@ def api_roadmap():
     except Exception as e:
         return jsonify({'error': f'Unexpected error: {e}'}), 500
 
-@app.route("/dsa")
-def dsa():
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-    return render_template("practice.html") 
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -656,17 +651,79 @@ def load_questions():
 def practice_page():
     if "user_id" not in session:
         return redirect(url_for("login"))
+    return render_template("practice_page")
+
+@app.route("/practice")
+def practice_page():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
     return render_template("practice.html")
 
+@app.route("/resume")
+def resume():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+    return render_template("resume.html")
 
-@app.route('/dsa')
-def dsa():
-    """DSA Practice mode - alternative route for the More menu"""
-    if 'user_id' not in session:
-        flash('Please login to access DSA practice', 'error')
-        return redirect(url_for('login'))
-    
-    return render_template('practice.html')
+@app.route("/api/gemini/resume", methods=["POST"])
+def gemini_resume():
+    if "user_id" not in session:
+        return jsonify({"ok": False, "error": "Not authenticated"}), 401
+    data = request.get_json(force=True, silent=True) or {}
+    profile = data.get("profile") or {}  # {name,email,phone,location,linkedin,github,summary}
+    skills  = data.get("skills") or []   # list of strings or {name,level}
+    projects= data.get("projects") or [] # [{name,tech,desc,impact,links}]
+    experience = data.get("experience") or [] # [{company,role,start,end,desc,impact}]
+    education = data.get("education") or []   # [{degree,school,year,score}]
+    target = (data.get("target") or "Software Engineer").strip()
+    seniority = (data.get("seniority") or "Fresher").strip()
+
+    if not GEMINI_API_KEY:
+        return jsonify({"ok": False, "error": "GEMINI_API_KEY not configured"}), 500
+
+    prompt = (
+        "You are an ATS and recruiter-optimized resume writer. "
+        f"Target role: {target}; Seniority: {seniority}. "
+        "Given candidate data (JSON below), produce:\n"
+        "1) improvements: three bullet suggestions to strengthen resume; "
+        "2) highlights: 5-8 power bullets quantified with STAR verbs; "
+        "3) html: full resume sections (Summary, Skills, Experience, Projects, Education) as clean HTML using <section> and <ul><li> only; "
+        "no external CSS, minimal inline classes (h5, small, ul). Use US English. Avoid placeholders.\n\n"
+        "Candidate JSON:\n"
+        f"{json.dumps({'profile':profile,'skills':skills,'projects':projects,'experience':experience,'education':education}, ensure_ascii=False)}\n\n"
+        "Return strict JSON with keys: improvements (array), highlights (array), html (string)."
+    )
+
+    payload = {
+        "contents": [{"role":"user","parts":[{"text": prompt}]}],
+        "generationConfig": {
+            "temperature": 0.4,
+            "response_mime_type": "application/json"
+        }
+    }
+
+    try:
+        resp = requests.post(
+            f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent",
+            headers={"Content-Type":"application/json","X-goog-api-key":GEMINI_API_KEY},
+            json=payload, timeout=25
+        )
+        if resp.status_code != 200:
+            return jsonify({"ok": False, "error": f"Gemini error {resp.status_code}: {resp.text[:300]}"}), 502
+        data = resp.json()
+        parts = (data.get("candidates") or [{}])[0].get("content", {}).get("parts", [])
+        text = "\n".join([p.get("text","") for p in parts if p.get("text")]).strip()
+        try:
+            out = json.loads(text) if text else {}
+        except Exception:
+            out = {}
+        out.setdefault("improvements", [])
+        out.setdefault("highlights", [])
+        out.setdefault("html", "<section><h5>Resume</h5><p>No content</p></section>")
+        return jsonify({"ok": True, "result": out})
+    except Exception as e:
+        return jsonify({"ok": False, "error": f"Unexpected: {e}"}), 500
+
 
 # Old practice API endpoint removed - now using client-side DSA questions
 
