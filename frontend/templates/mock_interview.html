@@ -244,15 +244,47 @@ function startTimer(durationMinutes) {
 function loadNextMockQuestion() {
   console.log('mock_interview.html: calling /mock/question');
   fetch('/mock/question')
-    .then(r => {
+    .then(async r => {
       console.log('mock_interview.html: response status', r.status);
-      return r.json();
+      let data = null;
+      try { data = await r.json(); } catch (_) { data = null; }
+
+      if (r.ok && data && data.question) {
+        currentQuestion = data.question;
+        displayMockQuestion(data.question);
+      } else {
+        console.warn('mock_interview.html: falling back to local question');
+        const fallback = {
+          id: Date.now() % 1000,
+          type: 'technical',
+          difficulty: 'easy',
+          question: 'Describe the difference between REST and RPC. When would you choose one over the other?',
+          tags: ['apis', 'architecture']
+        };
+        currentQuestion = fallback;
+        displayMockQuestion(fallback);
+        showMessage('Using a fallback question due to a loading issue.', 'warning');
+      }
+
+      // Ensure UI switches out of loading state
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('interview-container').style.display = 'block';
     })
-    .then(data => {
-      console.log('mock_interview.html: data', data);
-      // ... existing code
-    })
-    .catch(err => console.error('mock_interview.html: fetch error', err));
+    .catch(err => {
+      console.error('mock_interview.html: fetch error', err);
+      const fallback = {
+        id: Date.now() % 1000,
+        type: 'technical',
+        difficulty: 'easy',
+        question: 'What is a closure in JavaScript and why is it useful?',
+        tags: ['javascript', 'functions']
+      };
+      currentQuestion = fallback;
+      displayMockQuestion(fallback);
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('interview-container').style.display = 'block';
+      showMessage('Network error. Showing a fallback question.', 'warning');
+    });
 }
 
 
@@ -477,5 +509,31 @@ window.addEventListener('beforeunload', function(e) {
         return '';
     }
 });
+
+// Utility function to show messages
+function showMessage(message, type = 'info') {
+    const alertClass = type === 'error' ? 'alert-danger' : 
+                      type === 'warning' ? 'alert-warning' : 
+                      type === 'success' ? 'alert-success' : 'alert-info';
+    
+    const alertHtml = `
+        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    // Insert at the top of the container
+    const container = document.querySelector('.container');
+    container.insertAdjacentHTML('afterbegin', alertHtml);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        const alert = container.querySelector('.alert');
+        if (alert) {
+            alert.remove();
+        }
+    }, 5000);
+}
 </script>
 {% endblock %}

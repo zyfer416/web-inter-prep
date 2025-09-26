@@ -86,6 +86,7 @@ init_db()
 def _gemini_call(parts, expect_json=False, temperature=0.6):
     """Call Gemini generateContent with given parts. Returns text."""
     if not GEMINI_API_KEY:
+        print("Warning: GEMINI_API_KEY not configured, using fallback responses")
         return ""
     payload = {
         "contents": [{"role": "user", "parts": parts}],
@@ -121,6 +122,9 @@ def ai_interview_start():
     role = (body.get("role") or "Software Engineer").strip()
     level = (body.get("level") or "Fresher").strip()
     company = (body.get("company") or "Any").strip()
+    topic = (body.get("topic") or "technical").strip()
+    question_count = body.get("questionCount", 5)
+    time_limit = body.get("timeLimit", 30)
 
     # Create a mock session row (reuse your schema)
     conn = sqlite3.connect("interview_prep.db")
@@ -132,17 +136,53 @@ def ai_interview_start():
 
     session["mock_session_id"] = mock_session_id
     session["ai_round"] = 1
+    session["ai_question_count"] = question_count
+    session["ai_time_limit"] = time_limit
+    session["ai_topic"] = topic
+
+    # Generate topic-specific prompt
+    topic_prompts = {
+        "technical": "Ask a technical programming question",
+        "behavioral": "Ask a behavioral/situational question", 
+        "system-design": "Ask a system design question",
+        "mixed": "Ask either a technical or behavioral question"
+    }
+    
+    topic_instruction = topic_prompts.get(topic, "Ask a technical question")
 
     interviewer_prompt = (
         f"You are an interviewer for role '{role}' at '{company}' for a '{level}' candidate. "
-        "Ask one concise question only. No preface, no explanation. "
+        f"{topic_instruction}. Ask one concise question only. No preface, no explanation. "
         "Return strict JSON with keys: question, topic."
     )
     txt = _gemini_call([{"text": interviewer_prompt}], expect_json=True)
     try:
         qobj = json.loads(txt) if txt else {}
     except Exception:
-        qobj = {"question": "Tell me about yourself.", "topic": "Behavioral"}
+        qobj = {}
+    
+    # Fallback questions if Gemini fails
+    if not qobj.get("question"):
+        fallback_questions = {
+            "technical": [
+                {"question": "Explain the difference between REST and GraphQL APIs.", "topic": "Technical"},
+                {"question": "How would you design a URL shortening service like bit.ly?", "topic": "System Design"},
+                {"question": "What is the difference between SQL and NoSQL databases?", "topic": "Technical"}
+            ],
+            "behavioral": [
+                {"question": "Tell me about a time when you had to work with a difficult team member.", "topic": "Behavioral"},
+                {"question": "Describe a project where you had to learn a new technology quickly.", "topic": "Behavioral"},
+                {"question": "Give me an example of a time when you had to make a difficult technical decision.", "topic": "Behavioral"}
+            ],
+            "system-design": [
+                {"question": "Design a chat application that can handle millions of users.", "topic": "System Design"},
+                {"question": "How would you design a recommendation system for an e-commerce platform?", "topic": "System Design"},
+                {"question": "Design a distributed file storage system.", "topic": "System Design"}
+            ]
+        }
+        import random
+        topic_questions = fallback_questions.get(topic, fallback_questions["technical"])
+        qobj = random.choice(topic_questions)
 
     return jsonify({
         "ok": True,
@@ -163,10 +203,16 @@ def ai_interview_answer():
     if not question_text or not user_answer:
         return jsonify({"ok": False, "error": "Missing question or answer"}), 400
 
-    # Evaluator rubric prompt
+    # Evaluator rubric prompt - 10 point scale
     rubric = (
-        "Evaluate the candidate's answer. Use rubric: correctness 0-3, clarity 0-3, depth 0-2, conciseness 0-2. "
-        "Compute score_10 = sum. verdict in [Pass, Borderline, Improve]. "
+        "Evaluate the candidate's answer on a 10-point scale. "
+        "Score 10: Excellent answer with all key points covered, clear explanation, good examples. "
+        "Score 8-9: Good answer with most key points, clear structure. "
+        "Score 6-7: Adequate answer with some key points, basic understanding. "
+        "Score 4-5: Poor answer with few key points, unclear explanation. "
+        "Score 0-3: Very poor answer with major gaps or incorrect information. "
+        "Also provide: correctness (0-3), clarity (0-3), depth (0-2), conciseness (0-2). "
+        "verdict in [Pass, Borderline, Improve]. "
         "Provide strengths (3 items), improvements (3 items), ideal_answer (5-8 lines). "
         "Return strict JSON with keys: correctness, clarity, depth, conciseness, score_10, verdict, strengths, improvements, ideal_answer."
     )
@@ -178,12 +224,33 @@ def ai_interview_answer():
     except Exception:
         evaluation = {}
 
-    # Reasonable fallback if model didn't return JSON
+    # Reasonable fallback if model didn't return JSON or no API key
     if not isinstance(evaluation, dict) or "score_10" not in evaluation:
+        # Simple scoring based on answer length and content
+        answer_length = len(user_answer.strip())
+        if answer_length < 20:
+            score = 3
+            verdict = "Improve"
+        elif answer_length < 50:
+            score = 5
+            verdict = "Borderline"
+        elif answer_length < 100:
+            score = 7
+            verdict = "Pass"
+        else:
+            score = 8
+            verdict = "Pass"
+        
         evaluation = {
-            "correctness": 2, "clarity": 2, "depth": 1, "conciseness": 1,
-            "score_10": 6, "verdict": "Borderline",
-            "strengths": ["Relevant points"], "improvements": ["Add examples"], "ideal_answer": "Provide structure with key steps."
+            "correctness": min(3, score // 3), 
+            "clarity": min(3, score // 3), 
+            "depth": min(2, score // 4), 
+            "conciseness": min(2, score // 4),
+            "score_10": score, 
+            "verdict": verdict,
+            "strengths": ["Provided an answer", "Showed understanding"], 
+            "improvements": ["Add more detail", "Provide examples"], 
+            "ideal_answer": "A comprehensive answer with clear structure, examples, and technical details."
         }
 
     # Save attempt with feedback JSON stuffed in user_answer
@@ -200,18 +267,67 @@ def ai_interview_answer():
     finally:
         conn.close()
 
+    # Check if we should continue with more questions
+    current_round = int(session.get("ai_round", 1))
+    question_count = int(session.get("ai_question_count", 5))
+    
+    if current_round >= question_count:
+        # Interview complete
+        return jsonify({
+            "ok": True,
+            "evaluation": evaluation,
+            "interview_complete": True,
+            "final_score": evaluation.get("score_10", 0),
+            "total_questions": current_round
+        })
+    
     # Next question
-    session["ai_round"] = int(session.get("ai_round", 1)) + 1
+    session["ai_round"] = current_round + 1
+    topic = session.get("ai_topic", "technical")
+    
+    # Generate topic-specific next question
+    topic_prompts = {
+        "technical": "Ask a technical programming question",
+        "behavioral": "Ask a behavioral/situational question", 
+        "system-design": "Ask a system design question",
+        "mixed": "Ask either a technical or behavioral question"
+    }
+    
+    topic_instruction = topic_prompts.get(topic, "Ask a technical question")
+    
     next_prompt = (
-        "Based on the previous question and the candidate's answer quality, ask the next interview question. "
-        "Increase difficulty gradually. Return strict JSON: {\"question\":\"...\",\"topic\":\"...\"}. "
+        f"Based on the previous question and the candidate's answer quality, ask the next interview question. "
+        f"{topic_instruction}. Increase difficulty gradually. Return strict JSON: {{\"question\":\"...\",\"topic\":\"...\"}}. "
         f"Previous question: {question_text}"
     )
     next_json_text = _gemini_call([{"text": next_prompt}], expect_json=True)
     try:
         nxt = json.loads(next_json_text) if next_json_text else {}
     except Exception:
-        nxt = {"question": "Explain REST vs RPC and trade-offs.", "topic": "System Design"}
+        nxt = {}
+    
+    # Fallback next question if Gemini fails
+    if not nxt.get("question"):
+        fallback_questions = {
+            "technical": [
+                {"question": "Explain the concept of database indexing and how it improves query performance.", "topic": "Technical"},
+                {"question": "What is the difference between synchronous and asynchronous programming?", "topic": "Technical"},
+                {"question": "How would you implement a hash table from scratch?", "topic": "Technical"}
+            ],
+            "behavioral": [
+                {"question": "Tell me about a time when you had to debug a complex issue.", "topic": "Behavioral"},
+                {"question": "Describe a situation where you had to work under pressure.", "topic": "Behavioral"},
+                {"question": "How do you stay updated with the latest technology trends?", "topic": "Behavioral"}
+            ],
+            "system-design": [
+                {"question": "How would you design a social media feed system?", "topic": "System Design"},
+                {"question": "Design a load balancer that can handle traffic spikes.", "topic": "System Design"},
+                {"question": "How would you design a real-time analytics system?", "topic": "System Design"}
+            ]
+        }
+        import random
+        topic_questions = fallback_questions.get(topic, fallback_questions["technical"])
+        nxt = random.choice(topic_questions)
 
     return jsonify({
         "ok": True,
@@ -1081,20 +1197,20 @@ def internal_error(error):
     """Handle 500 errors"""
     return render_template('errors/500.html'), 500
 
-@app.route('/ai-interview', methods=['GET', 'POST'])
+@app.route('/ai-interview', methods=['GET'])
 def ai_interview():
-    if request.method == 'POST':
-        user_answer = request.form['answer']
-        feedback = f"Thanks for your answer! (You wrote: {user_answer})"
-        return render_template('ai_interview.html', question=None, feedback=feedback)
-    else:
-        question = random.choice([
-            "Tell me about yourself.",
-            "Why do you want this job?",
-            "Describe a challenge you faced and how you overcame it.",
-            "What are your strengths and weaknesses?"
-        ])
-        return render_template('ai_interview.html', question=question, feedback=None)
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('ai_interview.html')
+
+@app.route('/calendar')
+def calendar():
+    """Interview calendar page"""
+    if 'user_id' not in session:
+        flash('Please login to access calendar', 'error')
+        return redirect(url_for('login'))
+    return render_template('calendar.html')
+
 
 from services.gemini_client import ask_gemini
 
@@ -1106,6 +1222,176 @@ def gemini_qa():
         return jsonify({"ok": False, "error": "Empty prompt"}), 400
     answer = ask_gemini(prompt)
     return jsonify({"ok": True, "answer": answer})
+
+@app.route("/api/resume/ai-generate", methods=["POST"])
+def resume_ai_generate():
+    """Generate a starter resume using AI from minimal info. Returns JSON structure."""
+    body = request.get_json(force=True, silent=True) or {}
+    first_name = (body.get("firstName") or "").strip() or "John"
+    last_name = (body.get("lastName") or "").strip() or "Doe"
+    email = (body.get("email") or "").strip() or "john.doe@example.com"
+    phone = (body.get("phone") or "").strip() or "+1-555-555-5555"
+    target_role = (body.get("role") or "Software Engineer").strip()
+
+    if GEMINI_API_KEY:
+        instruction = (
+            "You are an expert resume writer. Based on minimal candidate info, "
+            "create a concise, ATS-friendly software resume. Return STRICT JSON with keys: "
+            "firstName, lastName, email, phone, location, linkedin, summary, "
+            "experience: [{jobTitle, company, startDate, endDate, description}], "
+            "education: [{degree, school, gradYear, gpa}], skills: [..], "
+            "projects: [{name, url, description}]. Dates in MM/YYYY or 'Present'. Keep content realistic."
+        )
+        seed = (
+            f"Name: {first_name} {last_name}\nEmail: {email}\nPhone: {phone}\nTarget Role: {target_role}"
+        )
+        try:
+            ai_json = _gemini_call([
+                {"text": instruction},
+                {"text": "\nCandidate:"},
+                {"text": seed}
+            ], expect_json=True, temperature=0.3)
+            if ai_json:
+                try:
+                    data = json.loads(ai_json)
+                    data.setdefault("firstName", first_name)
+                    data.setdefault("lastName", last_name)
+                    data.setdefault("email", email)
+                    data.setdefault("phone", phone)
+                    return jsonify({"ok": True, "resume": data})
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+    # Fallback template when AI not available or parsing failed
+    from datetime import datetime
+    year = datetime.utcnow().year
+    fallback = {
+        "firstName": first_name,
+        "lastName": last_name,
+        "email": email,
+        "phone": phone,
+        "location": "Your City, Country",
+        "linkedin": "https://www.linkedin.com/in/your-profile",
+        "summary": f"Aspiring {target_role} with strong CS fundamentals and hands-on project experience.",
+        "experience": [
+            {"jobTitle": "{role}".format(role=target_role), "company": "Demo Company",
+             "startDate": "06/{y}".format(y=year-1), "endDate": "Present",
+             "description": "Built features, fixed bugs, collaborated with team, and wrote tests."}
+        ],
+        "education": [
+            {"degree": "B.Tech in Computer Science", "school": "ABC University", "gradYear": str(year), "gpa": "8.0/10"}
+        ],
+        "skills": ["Python", "Flask", "JavaScript", "React", "SQL"],
+        "projects": [
+            {"name": "Portfolio Website", "url": "https://example.com", "description": "Personal portfolio with responsive UI."}
+        ]
+    }
+    return jsonify({"ok": True, "resume": fallback})
+
+@app.route("/api/resume/test", methods=["GET"])
+def test_resume():
+    """Test route to verify server is working."""
+    return jsonify({"ok": True, "message": "Resume API is working"})
+
+@app.route("/api/resume/generate", methods=["POST"])
+def generate_resume():
+    """Generate ATS-friendly resume with AI recommendations."""
+    print("Resume generation endpoint called")  # Debug log
+    
+    if not GEMINI_API_KEY:
+        print("No Gemini API key configured")  # Debug log
+        return jsonify({"ok": False, "error": "Gemini API key not configured"})
+    
+    body = request.get_json(force=True, silent=True) or {}
+    print(f"Received data: {body}")  # Debug log
+    
+    # Extract resume data
+    personal_info = {
+        "name": f"{body.get('firstName', '')} {body.get('lastName', '')}".strip(),
+        "email": body.get('email', ''),
+        "phone": body.get('phone', ''),
+        "location": body.get('location', ''),
+        "linkedin": body.get('linkedin', ''),
+        "summary": body.get('summary', '')
+    }
+    
+    experience = body.get('experience', [])
+    education = body.get('education', [])
+    projects = body.get('projects', [])
+    skills = body.get('skills', [])
+    
+    # Create resume analysis prompt
+    analysis_prompt = f"""
+    Analyze this resume for ATS (Applicant Tracking System) compatibility and provide recommendations:
+    
+    PERSONAL INFO:
+    Name: {personal_info['name']}
+    Email: {personal_info['email']}
+    Phone: {personal_info['phone']}
+    Location: {personal_info['location']}
+    LinkedIn: {personal_info['linkedin']}
+    Summary: {personal_info['summary']}
+    
+    EXPERIENCE:
+    {chr(10).join([f"- {exp.get('jobTitle', '')} at {exp.get('company', '')} ({exp.get('startDate', '')} - {exp.get('endDate', '')}): {exp.get('description', '')}" for exp in experience])}
+    
+    EDUCATION:
+    {chr(10).join([f"- {edu.get('degree', '')} from {edu.get('school', '')} ({edu.get('gradYear', '')})" for edu in education])}
+    
+    SKILLS:
+    {', '.join(skills)}
+    
+    PROJECTS:
+    {chr(10).join([f"- {proj.get('name', '')}: {proj.get('description', '')}" for proj in projects])}
+    
+    Please provide:
+    1. ATS Score (0-100) based on keyword optimization, formatting, and completeness
+    2. Specific recommendations for improvement
+    3. Missing keywords that should be added
+    4. Formatting suggestions for better ATS parsing
+    
+    Return as JSON with keys: ats_score, recommendations (array of objects with title and description), missing_keywords, formatting_tips.
+    """
+    
+    try:
+        analysis_result = _gemini_call([{"text": analysis_prompt}], expect_json=True, temperature=0.2)
+        
+        if not analysis_result:
+            # Fallback analysis without API
+            ats_score = min(85, 60 + len(experience) * 5 + len(skills) * 2)
+            recommendations = [
+                {"title": "Add More Keywords", "description": "Include industry-specific keywords from job descriptions"},
+                {"title": "Quantify Achievements", "description": "Add numbers and metrics to your experience descriptions"},
+                {"title": "Optimize Summary", "description": "Write a compelling 2-3 line professional summary"}
+            ]
+            missing_keywords = ["leadership", "project management", "problem solving"]
+            formatting_tips = ["Use standard section headers", "Avoid graphics and tables", "Use bullet points"]
+        else:
+            try:
+                analysis = json.loads(analysis_result)
+                ats_score = analysis.get('ats_score', 75)
+                recommendations = analysis.get('recommendations', [])
+                missing_keywords = analysis.get('missing_keywords', [])
+                formatting_tips = analysis.get('formatting_tips', [])
+            except:
+                # Fallback if JSON parsing fails
+                ats_score = 75
+                recommendations = [{"title": "AI Analysis", "description": "Resume analyzed successfully"}]
+                missing_keywords = []
+                formatting_tips = []
+        
+        return jsonify({
+            "ok": True,
+            "ats_score": ats_score,
+            "recommendations": recommendations,
+            "missing_keywords": missing_keywords,
+            "formatting_tips": formatting_tips
+        })
+        
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)})
 
 # Single unified run block; no secret prints
 if __name__ == '__main__':

@@ -14,6 +14,8 @@
     --blue-medium: #3b82f6;
     --dropdown-bg: #374151;
     --dropdown-text: #ffffff;
+    --glow: 0 10px 25px rgba(37, 99, 235, 0.25);
+    --soft-shadow: 0 8px 24px rgba(0,0,0,0.08);
 }
 
 /* Global styles */
@@ -21,6 +23,11 @@ body {
     font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
     background-color: #ffffff;
+}
+
+/* Smooth transitions globally for interactive elements */
+a, .btn, .card, .list-group-item, .navbar .nav-link, .badge, .form-control, .dropdown-item, .progress, .alert {
+    transition: all 0.2s ease-in-out;
 }
 
 /* Hero section gradient */
@@ -329,6 +336,15 @@ body {
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
 }
 
+/* Fancy card variants */
+.card.hover-glow:hover {
+    box-shadow: var(--glow) !important;
+}
+
+.card.hover-zoom:hover {
+    transform: translateY(-4px) scale(1.02);
+}
+
 /* Button styles */
 .btn {
     border-radius: 8px;
@@ -340,6 +356,20 @@ body {
 .btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-primary {
+    background-image: linear-gradient(135deg, var(--primary-color), #4f46e5);
+    border: none;
+}
+
+.btn-primary:hover {
+    filter: brightness(1.05);
+    box-shadow: var(--glow);
+}
+
+.btn-outline-primary:hover {
+    background: var(--blue-light);
 }
 
 .btn-light {
@@ -379,6 +409,30 @@ body {
     transform: translateY(-1px);
 }
 
+/* Underline slide effect for nav links */
+.navbar-nav .nav-link {
+    position: relative;
+}
+
+.navbar-nav .nav-link::after {
+    content: '';
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 6px;
+    height: 2px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.25s ease;
+    opacity: 0.6;
+}
+
+.navbar-nav .nav-link:hover::after,
+.navbar-nav .nav-link.active::after {
+    transform: scaleX(1);
+}
+
 /* Form styles */
 .form-control {
     border-radius: 8px;
@@ -406,6 +460,21 @@ body {
     border: none;
 }
 
+/* Links hover */
+a:not(.btn):hover {
+    color: var(--blue-medium);
+}
+
+/* List group hover */
+.list-group-item:hover {
+    background: #f8fafc;
+}
+
+/* Table row hover */
+.table-hover tbody tr:hover {
+    background-color: #f8fafc;
+}
+
 /* Statistics cards */
 .card-body h2 {
     font-weight: bold;
@@ -431,6 +500,66 @@ footer {
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+/* Reveal on scroll */
+.reveal-on-scroll {
+    opacity: 0;
+    transform: translateY(16px);
+}
+
+.reveal-in {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 500ms ease, transform 500ms ease;
+}
+
+/* Image hover zoom */
+img.hover-zoom {
+    display: block;
+    transform: translateZ(0);
+}
+
+img.hover-zoom:hover {
+    transform: scale(1.03);
+}
+
+/* Gradient text hover */
+.hover-gradient-text:hover {
+    background: linear-gradient(135deg, var(--primary-color), var(--info-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Subtle glass effect */
+.glass {
+    background: rgba(255,255,255,0.6);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.4);
+}
+
+/* Floating buttons group */
+.btn-group .btn:hover {
+    z-index: 2;
+}
+
+/* Section hover edge highlight */
+.section-hover {
+    position: relative;
+    overflow: hidden;
+}
+
+.section-hover::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 2px solid transparent;
+    border-radius: 12px;
+}
+
+.section-hover:hover::before {
+    border-image: linear-gradient(135deg, var(--primary-color), var(--info-color)) 1;
 }
 
 /* Practice session styles */

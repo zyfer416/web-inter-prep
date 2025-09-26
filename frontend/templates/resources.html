@@ -1,415 +1,1106 @@
 {% extends "base.html" %}
 
-{% block title %}Learning Resources - Web-Inter-Prep{% endblock %}
+{% block title %}Resume Builder - Web-Inter-Prep{% endblock %}
 
 {% block extra_css %}
 <style>
-    .resources-header {
-        background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);
+    .resume-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         padding: 3rem 0;
         margin-bottom: 2rem;
     }
     
-    .resource-card {
-        border: none;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        transition: all 0.3s ease;
-        height: 100%;
-    }
-    
-    .resource-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-    }
-    
-    .resource-type {
-        font-size: 0.8rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    .section-header {
-        border-bottom: 3px solid;
-        padding-bottom: 0.5rem;
+    .step-indicator {
+        display: flex;
+        justify-content: center;
         margin-bottom: 2rem;
     }
     
-    .technical-section {
-        border-color: #007bff;
+    .step {
+        display: flex;
+        align-items: center;
+        margin: 0 1rem;
+        opacity: 0.5;
+        transition: all 0.3s ease;
     }
     
-    .behavioral-section {
-        border-color: #28a745;
+    .step.active {
+        opacity: 1;
+        transform: scale(1.05);
     }
     
-    .general-section {
-        border-color: #6f42c1;
+    .step.completed {
+        opacity: 1;
+        color: #28a745;
     }
     
-    .resource-icon {
-        width: 60px;
-        height: 60px;
+    .step-number {
+        width: 40px;
+        height: 40px;
         border-radius: 50%;
+        background: #6c757d;
+        color: white;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin: 0 auto 1rem;
-    }
-    
-    .technical-icon {
-        background: linear-gradient(135deg, #007bff, #0056b3);
-        color: white;
-    }
-    
-    .behavioral-icon {
-        background: linear-gradient(135deg, #28a745, #20c997);
-        color: white;
-    }
-    
-    .general-icon {
-        background: linear-gradient(135deg, #6f42c1, #e83e8c);
-        color: white;
-    }
-    
-    .quick-tips {
-        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-        border-radius: 10px;
-        padding: 2rem;
-        margin-bottom: 3rem;
-    }
-    
-    .tip-item {
-        border-left: 4px solid #007bff;
-        padding-left: 1rem;
-        margin-bottom: 1rem;
-    }
-    
-    .recommendation-badge {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-        color: white;
-        font-size: 0.7rem;
-        padding: 0.25rem 0.5rem;
-        border-radius: 12px;
+        margin-right: 0.5rem;
         font-weight: bold;
     }
     
-    .external-link-icon {
-        font-size: 0.8rem;
-        opacity: 0.7;
+    .step.active .step-number {
+        background: #007bff;
+    }
+    
+    .step.completed .step-number {
+        background: #28a745;
+    }
+    
+    .resume-form {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .form-section {
+        display: none;
+    }
+    
+    .form-section.active {
+        display: block;
+        animation: fadeInUp 0.5s ease;
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .section-title {
+        color: #495057;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e9ecef;
+    }
+    
+    .form-floating {
+        margin-bottom: 1rem;
+    }
+    
+    .skill-tag {
+        display: inline-block;
+        background: #e3f2fd;
+        color: #1976d2;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        margin: 0.25rem;
+        font-size: 0.875rem;
+        border: 1px solid #bbdefb;
+    }
+    
+    .skill-tag .remove-skill {
         margin-left: 0.5rem;
+        cursor: pointer;
+        color: #f44336;
+    }
+    
+    .experience-item, .education-item, .project-item {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid #007bff;
+    }
+    
+    .add-item-btn {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        border: none;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 25px;
+        transition: all 0.3s ease;
+    }
+    
+    .add-item-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
+    }
+    
+    .resume-preview {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+        margin-top: 2rem;
+    }
+    
+    .preview-header {
+        text-align: center;
+        border-bottom: 2px solid #e9ecef;
+        padding-bottom: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .preview-section {
+        margin-bottom: 1.5rem;
+    }
+    
+    .preview-section h5 {
+        color: #495057;
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 0.5rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .ats-score {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+        padding: 1rem;
+        border-radius: 10px;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+    
+    .recommendations {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-top: 1rem;
+    }
+    
+    .recommendation-item {
+        background: white;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        border-left: 4px solid #007bff;
+    }
+    
+    .loading-spinner {
+        display: none;
+        text-align: center;
+        padding: 2rem;
+    }
+    
+    .progress-bar {
+        height: 8px;
+        border-radius: 4px;
+        background: linear-gradient(135deg, #007bff, #0056b3);
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
+    }
+    
+    .btn-outline-primary {
+        border: 2px solid #007bff;
+        color: #007bff;
+        background: transparent;
+        padding: 0.75rem 2rem;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-outline-primary:hover {
+        background: #007bff;
+        color: white;
+        transform: translateY(-2px);
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="resources-header">
+<div class="resume-header">
     <div class="container text-center">
-        <i class="fas fa-book-open display-1 mb-3"></i>
-        <h1 class="display-4 fw-bold">Learning Resources</h1>
-        <p class="lead">Curated materials to boost your interview preparation</p>
+        <i class="fas fa-file-alt display-1 mb-3"></i>
+        <h1 class="display-4 fw-bold">AI-Powered Resume Builder</h1>
+        <p class="lead">Create ATS-friendly resumes with AI recommendations</p>
     </div>
 </div>
 
 <div class="container">
-    <!-- Quick Tips Section -->
-    <div class="quick-tips">
-        <h3 class="text-center mb-4">
-            <i class="fas fa-lightbulb text-warning me-2"></i>Quick Study Tips
-        </h3>
-        <div class="row">
-            <div class="col-md-4">
-                <div class="tip-item">
-                    <h6><i class="fas fa-clock text-primary me-2"></i>Consistent Practice</h6>
-                    <p class="mb-0">Study for 30-60 minutes daily rather than cramming before interviews.</p>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="tip-item" style="border-left-color: #28a745;">
-                    <h6><i class="fas fa-users text-success me-2"></i>Mock Interviews</h6>
-                    <p class="mb-0">Practice with friends or use our mock interview feature regularly.</p>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="tip-item" style="border-left-color: #ffc107;">
-                    <h6><i class="fas fa-target text-warning me-2"></i>Focus on Weak Areas</h6>
-                    <p class="mb-0">Identify and spend extra time on topics where you struggle.</p>
-                </div>
-            </div>
+    <!-- Step Indicator -->
+    <div class="step-indicator">
+        <div class="step active" data-step="1">
+            <div class="step-number">1</div>
+            <span>Personal Info</span>
+        </div>
+        <div class="step" data-step="2">
+            <div class="step-number">2</div>
+            <span>Experience</span>
+        </div>
+        <div class="step" data-step="3">
+            <div class="step-number">3</div>
+            <span>Education</span>
+        </div>
+        <div class="step" data-step="4">
+            <div class="step-number">4</div>
+            <span>Skills & Projects</span>
+        </div>
+        <div class="step" data-step="5">
+            <div class="step-number">5</div>
+            <span>Review & Generate</span>
         </div>
     </div>
 
-    <!-- Technical Resources -->
-    <section class="mb-5">
-        <h2 class="section-header technical-section">
-            <i class="fas fa-code text-primary me-2"></i>Technical Interview Resources
-        </h2>
-        <div class="row">
-            {% for resource in resources.technical %}
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="card resource-card position-relative">
-                    {% if loop.index == 1 %}
-                    <div class="recommendation-badge">
-                        <i class="fas fa-star me-1"></i>Recommended
-                    </div>
-                    {% endif %}
-                    <div class="card-body text-center">
-                        <div class="resource-icon technical-icon">
-                            <i class="fas fa-laptop-code display-6"></i>
-                        </div>
-                        <h5 class="card-title">{{ resource.title }}</h5>
-                        <p class="resource-type text-primary mb-2">{{ resource.type }}</p>
-                        <p class="card-text">{{ resource.description }}</p>
-                        <a href="{{ resource.url }}" target="_blank" class="btn btn-primary">
-                            Visit Resource<i class="fas fa-external-link-alt external-link-icon"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        
-        <!-- Additional Technical Tips -->
-        <div class="alert alert-info">
-            <h6><i class="fas fa-info-circle me-2"></i>Technical Interview Tips:</h6>
-            <ul class="mb-0">
-                <li>Always think out loud and explain your approach</li>
-                <li>Start with a brute force solution, then optimize</li>
-                <li>Consider edge cases and test your code</li>
-                <li>Know your time and space complexity</li>
-            </ul>
-        </div>
-    </section>
+    <!-- Progress Bar -->
+    <div class="progress mb-4" style="height: 8px;">
+        <div class="progress-bar" role="progressbar" style="width: 20%" id="progressBar"></div>
+    </div>
 
-    <!-- Behavioral Resources -->
-    <section class="mb-5">
-        <h2 class="section-header behavioral-section">
-            <i class="fas fa-comments text-success me-2"></i>Behavioral Interview Resources
-        </h2>
+    <!-- Resume Form -->
+    <div class="resume-form">
+        <form id="resumeForm">
+            <!-- Step 1: Personal Information -->
+            <div class="form-section active" id="step1">
+                <h3 class="section-title">
+                    <i class="fas fa-user me-2"></i>Personal Information
+        </h3>
         <div class="row">
-            {% for resource in resources.behavioral %}
-            <div class="col-lg-6 col-md-6 mb-4">
-                <div class="card resource-card">
-                    <div class="card-body text-center">
-                        <div class="resource-icon behavioral-icon">
-                            <i class="fas fa-user-tie display-6"></i>
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" id="firstName" name="firstName" placeholder="First Name" required>
+                            <label for="firstName">First Name</label>
                         </div>
-                        <h5 class="card-title">{{ resource.title }}</h5>
-                        <p class="resource-type text-success mb-2">{{ resource.type }}</p>
-                        <p class="card-text">{{ resource.description }}</p>
-                        <a href="{{ resource.url }}" target="_blank" class="btn btn-success">
-                            Visit Resource<i class="fas fa-external-link-alt external-link-icon"></i>
-                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" id="lastName" name="lastName" placeholder="Last Name" required>
+                            <label for="lastName">Last Name</label>
+                        </div>
                     </div>
                 </div>
-            </div>
-            {% endfor %}
-        </div>
-        
-        <!-- STAR Method Guide -->
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">
-                    <i class="fas fa-star text-warning me-2"></i>The STAR Method
-                </h5>
-                <p class="card-text">Structure your behavioral answers using this proven framework:</p>
                 <div class="row">
-                    <div class="col-md-3 text-center mb-3">
-                        <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                            <strong>S</strong>
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <input type="email" class="form-control" id="email" name="email" placeholder="Email" required>
+                            <label for="email">Email</label>
                         </div>
-                        <h6 class="mt-2">Situation</h6>
-                        <small class="text-muted">Set the context</small>
                     </div>
-                    <div class="col-md-3 text-center mb-3">
-                        <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                            <strong>T</strong>
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <input type="tel" class="form-control" id="phone" name="phone" placeholder="Phone">
+                            <label for="phone">Phone Number</label>
                         </div>
-                        <h6 class="mt-2">Task</h6>
-                        <small class="text-muted">Describe your role</small>
-                    </div>
-                    <div class="col-md-3 text-center mb-3">
-                        <div class="bg-warning text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                            <strong>A</strong>
-                        </div>
-                        <h6 class="mt-2">Action</h6>
-                        <small class="text-muted">Explain what you did</small>
-                    </div>
-                    <div class="col-md-3 text-center mb-3">
-                        <div class="bg-info text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                            <strong>R</strong>
-                        </div>
-                        <h6 class="mt-2">Result</h6>
-                        <small class="text-muted">Share the outcome</small>
-                    </div>
+                </div>
+            </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" id="location" name="location" placeholder="Location">
+                            <label for="location">Location (City, State)</label>
+                </div>
+            </div>
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <input type="url" class="form-control" id="linkedin" name="linkedin" placeholder="LinkedIn URL">
+                            <label for="linkedin">LinkedIn Profile</label>
                 </div>
             </div>
         </div>
-    </section>
-
-    <!-- General Resources -->
-    <section class="mb-5">
-        <h2 class="section-header general-section">
-            <i class="fas fa-graduation-cap text-purple me-2"></i>General Interview Resources
-        </h2>
-        <div class="row">
-            {% for resource in resources.general %}
-            <div class="col-lg-6 col-md-6 mb-4">
-                <div class="card resource-card">
-                    <div class="card-body text-center">
-                        <div class="resource-icon general-icon">
-                            <i class="fas fa-book display-6"></i>
-                        </div>
-                        <h5 class="card-title">{{ resource.title }}</h5>
-                        <p class="resource-type text-purple mb-2">{{ resource.type }}</p>
-                        <p class="card-text">{{ resource.description }}</p>
-                        <a href="{{ resource.url }}" target="_blank" class="btn btn-purple" style="background-color: #6f42c1; border-color: #6f42c1; color: white;">
-                            Visit Resource<i class="fas fa-external-link-alt external-link-icon"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
+                <div class="form-floating mb-3">
+                    <textarea class="form-control" id="summary" name="summary" placeholder="Professional Summary" style="height: 100px"></textarea>
+                    <label for="summary">Professional Summary</label>
         </div>
-    </section>
+    </div>
 
-    <!-- Study Plan Section -->
-    <section class="mb-5">
-        <div class="card">
-            <div class="card-body">
-                <h3 class="card-title text-center mb-4">
-                    <i class="fas fa-calendar-alt text-primary me-2"></i>Suggested 4-Week Study Plan
+            <!-- Step 2: Work Experience -->
+            <div class="form-section" id="step2">
+                <h3 class="section-title">
+                    <i class="fas fa-briefcase me-2"></i>Work Experience
                 </h3>
+                <div id="experienceContainer">
+                    <div class="experience-item">
+        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <input type="text" class="form-control" name="jobTitle[]" placeholder="Job Title" required>
+                                    <label>Job Title</label>
+                    </div>
+                        </div>
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <input type="text" class="form-control" name="company[]" placeholder="Company" required>
+                                    <label>Company</label>
+                    </div>
+                </div>
+            </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <input type="text" class="form-control" name="startDate[]" placeholder="Start Date" required>
+                                    <label>Start Date (MM/YYYY)</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <input type="text" class="form-control" name="endDate[]" placeholder="End Date">
+                                    <label>End Date (MM/YYYY or "Present")</label>
+        </div>
+        </div>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <textarea class="form-control" name="description[]" placeholder="Job Description" style="height: 100px" required></textarea>
+                            <label>Job Description & Achievements</label>
+                    </div>
+                </div>
+            </div>
+                <button type="button" class="btn add-item-btn" onclick="addExperience()">
+                    <i class="fas fa-plus me-2"></i>Add Experience
+                </button>
+        </div>
+        
+            <!-- Step 3: Education -->
+            <div class="form-section" id="step3">
+                <h3 class="section-title">
+                    <i class="fas fa-graduation-cap me-2"></i>Education
+                </h3>
+                <div id="educationContainer">
+                    <div class="education-item">
                 <div class="row">
-                    <div class="col-md-3 mb-3">
-                        <div class="card h-100" style="border-color: #007bff;">
-                            <div class="card-header bg-primary text-white text-center">
-                                <h6 class="mb-0">Week 1</h6>
-                            </div>
-                            <div class="card-body">
-                                <h6>Foundation</h6>
-                                <ul class="list-unstyled">
-                                    <li><i class="fas fa-check text-success me-2"></i>Basic algorithms</li>
-                                    <li><i class="fas fa-check text-success me-2"></i>Data structures</li>
-                                    <li><i class="fas fa-check text-success me-2"></i>STAR method practice</li>
-                                </ul>
-                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <input type="text" class="form-control" name="degree[]" placeholder="Degree" required>
+                                    <label>Degree</label>
+                                </div>
+                        </div>
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <input type="text" class="form-control" name="school[]" placeholder="School/University" required>
+                                    <label>School/University</label>
+                    </div>
                         </div>
                     </div>
-                    <div class="col-md-3 mb-3">
-                        <div class="card h-100" style="border-color: #28a745;">
-                            <div class="card-header bg-success text-white text-center">
-                                <h6 class="mb-0">Week 2</h6>
-                            </div>
-                            <div class="card-body">
-                                <h6>Practice</h6>
-                                <ul class="list-unstyled">
-                                    <li><i class="fas fa-check text-success me-2"></i>Medium problems</li>
-                                    <li><i class="fas fa-check text-success me-2"></i>System design basics</li>
-                                    <li><i class="fas fa-check text-success me-2"></i>Mock interviews</li>
-                                </ul>
-                            </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <input type="text" class="form-control" name="gradYear[]" placeholder="Graduation Year">
+                                    <label>Graduation Year</label>
                         </div>
                     </div>
-                    <div class="col-md-3 mb-3">
-                        <div class="card h-100" style="border-color: #ffc107;">
-                            <div class="card-header bg-warning text-white text-center">
-                                <h6 class="mb-0">Week 3</h6>
-                            </div>
-                            <div class="card-body">
-                                <h6>Advanced</h6>
-                                <ul class="list-unstyled">
-                                    <li><i class="fas fa-check text-success me-2"></i>Hard problems</li>
-                                    <li><i class="fas fa-check text-success me-2"></i>System design</li>
-                                    <li><i class="fas fa-check text-success me-2"></i>Company research</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <div class="card h-100" style="border-color: #dc3545;">
-                            <div class="card-header bg-danger text-white text-center">
-                                <h6 class="mb-0">Week 4</h6>
-                            </div>
-                            <div class="card-body">
-                                <h6>Review</h6>
-                                <ul class="list-unstyled">
-                                    <li><i class="fas fa-check text-success me-2"></i>Weak areas</li>
-                                    <li><i class="fas fa-check text-success me-2"></i>Final mock tests</li>
-                                    <li><i class="fas fa-check text-success me-2"></i>Interview prep</li>
-                                </ul>
-                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <input type="text" class="form-control" name="gpa[]" placeholder="GPA (Optional)">
+                                    <label>GPA (Optional)</label>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </section>
+                <button type="button" class="btn add-item-btn" onclick="addEducation()">
+                    <i class="fas fa-plus me-2"></i>Add Education
+                </button>
+            </div>
 
-    <!-- Call to Action -->
-    <div class="text-center mb-5">
-        <h3>Ready to Start Your Preparation?</h3>
-        <p class="lead text-muted">Put these resources to use with our practice tools</p>
-        <div class="d-flex flex-wrap justify-content-center gap-3">
-            <a href="{{ url_for('practice') }}" class="btn btn-primary btn-lg">
-                <i class="fas fa-play me-2"></i>Start Practice
-            </a>
-            <a href="{{ url_for('mock_interview') }}" class="btn btn-outline-primary btn-lg">
-                <i class="fas fa-stopwatch me-2"></i>Take Mock Interview
-            </a>
-            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary btn-lg">
-                <i class="fas fa-tachometer-alt me-2"></i>View Progress
-            </a>
+            <!-- Step 4: Skills and Projects -->
+            <div class="form-section" id="step4">
+                <h3 class="section-title">
+                    <i class="fas fa-code me-2"></i>Skills & Projects
+                </h3>
+                
+                <div class="mb-4">
+                    <label class="form-label">Technical Skills</label>
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" id="skillInput" placeholder="Add a skill">
+                        <button type="button" class="btn btn-outline-primary" onclick="addSkill()">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    <div id="skillsContainer"></div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">Projects</label>
+                    <div id="projectsContainer">
+                        <div class="project-item">
+        <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-floating mb-3">
+                                        <input type="text" class="form-control" name="projectName[]" placeholder="Project Name" required>
+                                        <label>Project Name</label>
+                                    </div>
+                        </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating mb-3">
+                                        <input type="url" class="form-control" name="projectUrl[]" placeholder="Project URL">
+                                        <label>Project URL (Optional)</label>
+                    </div>
+                </div>
+                        </div>
+                            <div class="form-floating mb-3">
+                                <textarea class="form-control" name="projectDescription[]" placeholder="Project Description" style="height: 80px" required></textarea>
+                                <label>Project Description</label>
+                    </div>
+                </div>
+            </div>
+                    <button type="button" class="btn add-item-btn" onclick="addProject()">
+                        <i class="fas fa-plus me-2"></i>Add Project
+                    </button>
+                            </div>
         </div>
+
+            <!-- Step 5: Review and Generate -->
+            <div class="form-section" id="step5">
+                <h3 class="section-title">
+                    <i class="fas fa-eye me-2"></i>Review & Generate Resume
+                </h3>
+                
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="resume-preview" id="resumePreview">
+                            <div class="preview-header">
+                                <h2 id="previewName">Your Name</h2>
+                                <p id="previewContact">Email • Phone • Location</p>
+                            </div>
+                            
+                            <div class="preview-section">
+                                <h5>Professional Summary</h5>
+                                <p id="previewSummary">Your professional summary will appear here...</p>
+                            </div>
+                            
+                            <div class="preview-section">
+                                <h5>Experience</h5>
+                                <div id="previewExperience">Your work experience will appear here...</div>
+                        </div>
+                            
+                            <div class="preview-section">
+                                <h5>Education</h5>
+                                <div id="previewEducation">Your education will appear here...</div>
+                    </div>
+                            
+                            <div class="preview-section">
+                                <h5>Skills</h5>
+                                <div id="previewSkills">Your skills will appear here...</div>
+                            </div>
+                            
+                            <div class="preview-section">
+                                <h5>Projects</h5>
+                                <div id="previewProjects">Your projects will appear here...</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title"><i class="fas fa-font me-2"></i>Typography</h5>
+                                <div class="mb-2">
+                                    <label class="form-label">Name Font</label>
+                                    <select id="fontName" class="form-select">
+                                        <option value="'Inter', sans-serif" selected>Inter</option>
+                                        <option value="'Georgia', serif">Georgia</option>
+                                        <option value="'Times New Roman', Times, serif">Times New Roman</option>
+                                        <option value="'Garamond', serif">Garamond</option>
+                                        <option value="'Montserrat', sans-serif">Montserrat</option>
+                                    </select>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label">Section Headings Font</label>
+                                    <select id="fontHeadings" class="form-select">
+                                        <option value="'Inter', sans-serif" selected>Inter</option>
+                                        <option value="'Poppins', sans-serif">Poppins</option>
+                                        <option value="'Roboto Slab', serif">Roboto Slab</option>
+                                        <option value="'Merriweather', serif">Merriweather</option>
+                                    </select>
+                            </div>
+                                <div class="mb-2">
+                                    <label class="form-label">Body Font</label>
+                                    <select id="fontBody" class="form-select">
+                                        <option value="'Inter', sans-serif" selected>Inter</option>
+                                        <option value="'Open Sans', sans-serif">Open Sans</option>
+                                        <option value="'Lato', sans-serif">Lato</option>
+                                        <option value="'Source Serif Pro', serif">Source Serif Pro</option>
+                                    </select>
+                            </div>
+                                <small class="text-muted">Fonts are applied live to the preview.</small>
+                        </div>
+                    </div>
+                        <div class="d-grid gap-2">
+                            <button type="button" id="aiGenerateBtn" class="btn btn-primary">
+                                <i class="fas fa-robot me-2"></i>Generate Using AI (basic info only)
+                            </button>
+                            <button type="button" id="downloadBtn" class="btn btn-outline-secondary">
+                                <i class="fas fa-download me-2"></i>Download / Print
+                            </button>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+
+            <!-- Navigation Buttons -->
+            <div class="d-flex justify-content-between mt-4">
+                <button type="button" class="btn btn-outline-primary" id="prevBtn" onclick="changeStep(-1)" style="display: none;">
+                    <i class="fas fa-arrow-left me-2"></i>Previous
+                </button>
+                <button type="button" class="btn btn-primary" id="nextBtn" onclick="changeStep(1)">
+                    Next<i class="fas fa-arrow-right ms-2"></i>
+                </button>
+                <button type="button" class="btn btn-success" id="generateBtn" onclick="generateResume()" style="display: none;">
+                    <i class="fas fa-magic me-2"></i>Generate Preview
+                </button>
+            </div>
+        </form>
+        </div>
+
+    <!-- Loading Spinner -->
+    <div class="loading-spinner" id="loadingSpinner">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">AI is analyzing your resume...</p>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-// Add some interactive features
+// Resume Builder JavaScript
+let currentStep = 1;
+let skills = [];
+let resumeData = {};
+
 document.addEventListener('DOMContentLoaded', function() {
-    // Animate resource cards on scroll
-    const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
-    };
-    
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.style.opacity = '1';
-                entry.target.style.transform = 'translateY(0)';
-            }
-        });
-    }, observerOptions);
-    
-    // Observe all resource cards
-    document.querySelectorAll('.resource-card').forEach(card => {
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(20px)';
-        card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-        observer.observe(card);
-    });
-    
-    // Track external link clicks
-    document.querySelectorAll('a[target="_blank"]').forEach(link => {
-        link.addEventListener('click', function() {
-            console.log('External resource visited:', this.href);
-            // You could send analytics data here
-        });
-    });
+    initializeResumeBuilder();
 });
 
-// Add tooltips to study plan items
-if (typeof bootstrap !== 'undefined') {
-    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(element => {
-        new bootstrap.Tooltip(element);
+function initializeResumeBuilder() {
+    // Add event listeners for form inputs
+    document.querySelectorAll('input, textarea').forEach(input => {
+        input.addEventListener('input', updatePreview);
     });
+    
+    // Skill input enter key
+    document.getElementById('skillInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addSkill();
+        }
+    });
+}
+
+function changeStep(direction) {
+    const totalSteps = 5;
+    const newStep = currentStep + direction;
+    
+    if (newStep < 1 || newStep > totalSteps) return;
+    
+    // Hide current step
+    document.getElementById(`step${currentStep}`).classList.remove('active');
+    document.querySelector(`.step[data-step="${currentStep}"]`).classList.remove('active');
+    
+    // Show new step
+    currentStep = newStep;
+    document.getElementById(`step${currentStep}`).classList.add('active');
+    document.querySelector(`.step[data-step="${currentStep}"]`).classList.add('active');
+    
+    // Update progress bar
+    const progress = (currentStep / totalSteps) * 100;
+    document.getElementById('progressBar').style.width = `${progress}%`;
+    
+    // Update navigation buttons
+    updateNavigationButtons();
+    
+    // Update preview if on step 5
+    if (currentStep === 5) {
+        updatePreview();
+    }
+}
+
+function updateNavigationButtons() {
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const generateBtn = document.getElementById('generateBtn');
+    
+    prevBtn.style.display = currentStep > 1 ? 'block' : 'none';
+    
+    if (currentStep < 5) {
+        nextBtn.style.display = 'block';
+        generateBtn.style.display = 'none';
+    } else {
+        nextBtn.style.display = 'none';
+        generateBtn.style.display = 'block';
+    }
+}
+
+function addExperience() {
+    const container = document.getElementById('experienceContainer');
+    const newExperience = document.createElement('div');
+    newExperience.className = 'experience-item';
+    newExperience.innerHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-floating mb-3">
+                    <input type="text" class="form-control" name="jobTitle[]" placeholder="Job Title" required>
+                    <label>Job Title</label>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-floating mb-3">
+                    <input type="text" class="form-control" name="company[]" placeholder="Company" required>
+                    <label>Company</label>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-floating mb-3">
+                    <input type="text" class="form-control" name="startDate[]" placeholder="Start Date" required>
+                    <label>Start Date (MM/YYYY)</label>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-floating mb-3">
+                    <input type="text" class="form-control" name="endDate[]" placeholder="End Date">
+                    <label>End Date (MM/YYYY or "Present")</label>
+                </div>
+            </div>
+        </div>
+        <div class="form-floating mb-3">
+            <textarea class="form-control" name="description[]" placeholder="Job Description" style="height: 100px" required></textarea>
+            <label>Job Description & Achievements</label>
+        </div>
+        <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeItem(this)">
+            <i class="fas fa-trash me-1"></i>Remove
+        </button>
+    `;
+    container.appendChild(newExperience);
+    
+    // Add event listeners to new inputs
+    newExperience.querySelectorAll('input, textarea').forEach(input => {
+        input.addEventListener('input', updatePreview);
+    });
+}
+
+function addEducation() {
+    const container = document.getElementById('educationContainer');
+    const newEducation = document.createElement('div');
+    newEducation.className = 'education-item';
+    newEducation.innerHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-floating mb-3">
+                    <input type="text" class="form-control" name="degree[]" placeholder="Degree" required>
+                    <label>Degree</label>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-floating mb-3">
+                    <input type="text" class="form-control" name="school[]" placeholder="School/University" required>
+                    <label>School/University</label>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-floating mb-3">
+                    <input type="text" class="form-control" name="gradYear[]" placeholder="Graduation Year">
+                    <label>Graduation Year</label>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-floating mb-3">
+                    <input type="text" class="form-control" name="gpa[]" placeholder="GPA (Optional">
+                    <label>GPA (Optional)</label>
+                </div>
+            </div>
+        </div>
+        <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeItem(this)">
+            <i class="fas fa-trash me-1"></i>Remove
+        </button>
+    `;
+    container.appendChild(newEducation);
+    
+    // Add event listeners to new inputs
+    newEducation.querySelectorAll('input, textarea').forEach(input => {
+        input.addEventListener('input', updatePreview);
+    });
+}
+
+function addProject() {
+    const container = document.getElementById('projectsContainer');
+    const newProject = document.createElement('div');
+    newProject.className = 'project-item';
+    newProject.innerHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-floating mb-3">
+                    <input type="text" class="form-control" name="projectName[]" placeholder="Project Name" required>
+                    <label>Project Name</label>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-floating mb-3">
+                    <input type="url" class="form-control" name="projectUrl[]" placeholder="Project URL">
+                    <label>Project URL (Optional)</label>
+                </div>
+            </div>
+        </div>
+        <div class="form-floating mb-3">
+            <textarea class="form-control" name="projectDescription[]" placeholder="Project Description" style="height: 80px" required></textarea>
+            <label>Project Description</label>
+        </div>
+        <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeItem(this)">
+            <i class="fas fa-trash me-1"></i>Remove
+        </button>
+    `;
+    container.appendChild(newProject);
+    
+    // Add event listeners to new inputs
+    newProject.querySelectorAll('input, textarea').forEach(input => {
+        input.addEventListener('input', updatePreview);
+    });
+}
+
+function removeItem(button) {
+    button.closest('.experience-item, .education-item, .project-item').remove();
+    updatePreview();
+}
+
+function addSkill() {
+    const skillInput = document.getElementById('skillInput');
+    const skill = skillInput.value.trim();
+    
+    if (skill && !skills.includes(skill)) {
+        skills.push(skill);
+        skillInput.value = '';
+        updateSkillsDisplay();
+        updatePreview();
+    }
+}
+
+function removeSkill(skill) {
+    skills = skills.filter(s => s !== skill);
+    updateSkillsDisplay();
+    updatePreview();
+}
+
+function updateSkillsDisplay() {
+    const container = document.getElementById('skillsContainer');
+    container.innerHTML = skills.map(skill => `
+        <span class="skill-tag">
+            ${skill}
+            <span class="remove-skill" onclick="removeSkill('${skill}')">×</span>
+        </span>
+    `).join('');
+}
+
+function updatePreview() {
+    // Always sync preview so user can see progress live
+    
+    // Collect form data
+    const formData = new FormData(document.getElementById('resumeForm'));
+    const data = {};
+    
+    // Personal info
+    data.firstName = document.getElementById('firstName').value;
+    data.lastName = document.getElementById('lastName').value;
+    data.email = document.getElementById('email').value;
+    data.phone = document.getElementById('phone').value;
+    data.location = document.getElementById('location').value;
+    data.linkedin = document.getElementById('linkedin').value;
+    data.summary = document.getElementById('summary').value;
+    
+    // Experience
+    data.experience = [];
+    document.querySelectorAll('.experience-item').forEach(item => {
+        const jobTitle = item.querySelector('input[name="jobTitle[]"]').value;
+        const company = item.querySelector('input[name="company[]"]').value;
+        const startDateRaw = item.querySelector('input[name="startDate[]"]').value;
+        const endDateRaw = item.querySelector('input[name="endDate[]"]').value;
+        const description = item.querySelector('textarea[name="description[]"]').value;
+        const startDate = normalizeMonthYear(startDateRaw);
+        const endDate = normalizeMonthYear(endDateRaw, true);
+        
+        if (jobTitle && company) {
+            data.experience.push({ jobTitle, company, startDate, endDate, description });
+        }
+    });
+    
+    // Education
+    data.education = [];
+    document.querySelectorAll('.education-item').forEach(item => {
+        const degree = item.querySelector('input[name="degree[]"]').value;
+        const school = item.querySelector('input[name="school[]"]').value;
+        const gradYearRaw = item.querySelector('input[name="gradYear[]"]').value;
+        const gpa = item.querySelector('input[name="gpa[]"]').value;
+        const gradYear = normalizeYear(gradYearRaw);
+        
+        if (degree && school) {
+            data.education.push({ degree, school, gradYear, gpa });
+        }
+    });
+    
+    // Projects
+    data.projects = [];
+    document.querySelectorAll('.project-item').forEach(item => {
+        const name = item.querySelector('input[name="projectName[]"]').value;
+        const url = item.querySelector('input[name="projectUrl[]"]').value;
+        const description = item.querySelector('textarea[name="projectDescription[]"]').value;
+        
+        if (name) {
+            data.projects.push({ name, url, description });
+        }
+    });
+    
+    data.skills = skills;
+    
+    // Update preview
+    document.getElementById('previewName').textContent = `${data.firstName} ${data.lastName}`;
+    document.getElementById('previewContact').textContent = `${data.email} • ${data.phone} • ${data.location}`;
+    document.getElementById('previewSummary').textContent = data.summary || 'Your professional summary will appear here...';
+    
+    // Experience
+    const experienceHtml = data.experience.map(exp => `
+        <div class="mb-3">
+            <h6 class="mb-1">${exp.jobTitle} at ${exp.company}</h6>
+            <p class="text-muted mb-1">${exp.startDate} - ${exp.endDate}</p>
+            <p class="mb-0">${exp.description}</p>
+        </div>
+    `).join('');
+    document.getElementById('previewExperience').innerHTML = experienceHtml || 'Your work experience will appear here...';
+    
+    // Education
+    const educationHtml = data.education.map(edu => `
+        <div class="mb-3">
+            <h6 class="mb-1">${edu.degree}</h6>
+            <p class="text-muted mb-1">${edu.school} ${edu.gradYear ? `(${edu.gradYear})` : ''}</p>
+            ${edu.gpa ? `<p class="mb-0">GPA: ${edu.gpa}</p>` : ''}
+        </div>
+    `).join('');
+    document.getElementById('previewEducation').innerHTML = educationHtml || 'Your education will appear here...';
+    
+    // Skills
+    document.getElementById('previewSkills').innerHTML = skills.length > 0 ? 
+        skills.map(skill => `<span class="badge bg-primary me-1 mb-1">${skill}</span>`).join('') : 
+        'Your skills will appear here...';
+    
+    // Projects
+    const projectsHtml = data.projects.map(project => `
+        <div class="mb-3">
+            <h6 class="mb-1">${project.name}</h6>
+            ${project.url ? `<p class="text-muted mb-1"><a href="${project.url}" target="_blank">${project.url}</a></p>` : ''}
+            <p class="mb-0">${project.description}</p>
+        </div>
+    `).join('');
+    document.getElementById('previewProjects').innerHTML = projectsHtml || 'Your projects will appear here...';
+    
+    resumeData = data;
+    applyFonts();
+}
+
+// Helpers: normalize dates
+function normalizeMonthYear(value, allowPresent=false){
+    const v = (value || '').trim();
+    if (!v) return '';
+    if (allowPresent && /present/i.test(v)) return 'Present';
+    // Accept formats like MM/YYYY, M/YYYY, YYYY-MM, YYYY/MM, YYYY
+    const mmYYYY = /^(\d{1,2})\s*[\/-]\s*(\d{4})$/;
+    const yyyyMM = /^(\d{4})\s*[\/-]\s*(\d{1,2})$/;
+    const yyyyOnly = /^(\d{4})$/;
+    let m, y;
+    if (mmYYYY.test(v)) {
+        const m1 = v.match(mmYYYY);
+        m = String(Math.min(12, Math.max(1, parseInt(m1[1], 10)))).padStart(2,'0');
+        y = m1[2];
+        return `${m}/${y}`;
+    }
+    if (yyyyMM.test(v)) {
+        const m2 = v.match(yyyyMM);
+        y = m2[1];
+        m = String(Math.min(12, Math.max(1, parseInt(m2[2], 10)))).padStart(2,'0');
+        return `${m}/${y}`;
+    }
+    if (yyyyOnly.test(v)) {
+        return `01/${v}`;
+    }
+    return v; // fallback
+}
+
+function normalizeYear(value){
+    const v = (value || '').trim();
+    const yyyy = /^(\d{4})$/;
+    const mmYYYY = /^(\d{1,2})\s*[\/-]\s*(\d{4})$/;
+    if (yyyy.test(v)) return v;
+    if (mmYYYY.test(v)) return v.match(mmYYYY)[2];
+    return v;
+}
+
+function generateResume() {
+    // Ensure preview reflects latest data
+    updatePreview();
+    showMessage('Preview updated. You can download/print using the button.', 'success');
+}
+
+// Apply fonts live
+document.addEventListener('input', function(e){
+    if(e.target && (e.target.id === 'fontName' || e.target.id === 'fontHeadings' || e.target.id === 'fontBody')){
+        applyFonts();
+    }
+});
+
+document.getElementById('downloadBtn').addEventListener('click', function(){
+    window.print();
+});
+
+document.getElementById('aiGenerateBtn').addEventListener('click', async function(){
+    // Minimal payload from basic info
+    const payload = {
+        firstName: document.getElementById('firstName').value,
+        lastName: document.getElementById('lastName').value,
+        email: document.getElementById('email').value,
+        phone: document.getElementById('phone').value
+    };
+
+    try{
+        const res = await fetch('/api/resume/ai-generate', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if(!data.ok) throw new Error(data.error || 'Failed to generate');
+
+        // Populate form with AI result
+        fillFormFromAI(data.resume || {});
+        updatePreview();
+        showMessage('AI generated a starter resume. Review and edit as needed.', 'success');
+    }catch(err){
+        console.error(err);
+        showMessage('AI generation failed. Using a local template.', 'warning');
+        // Local fallback
+        fillFormFromAI(localResumeTemplate(payload));
+        updatePreview();
+    }
+});
+
+function fillFormFromAI(r){
+    // Personal
+    if(r.firstName) document.getElementById('firstName').value = r.firstName;
+    if(r.lastName) document.getElementById('lastName').value = r.lastName;
+    if(r.email) document.getElementById('email').value = r.email;
+    if(r.phone) document.getElementById('phone').value = r.phone;
+    if(r.location) document.getElementById('location').value = r.location;
+    if(r.linkedin) document.getElementById('linkedin').value = r.linkedin;
+    if(r.summary) document.getElementById('summary').value = r.summary;
+
+    // Clear existing dynamic items except the first templates
+    const expContainer = document.getElementById('experienceContainer');
+    expContainer.innerHTML = '';
+    (r.experience || []).forEach(exp => {
+        addExperience();
+        const item = expContainer.lastElementChild;
+        item.querySelector('input[name="jobTitle[]"]').value = exp.jobTitle || '';
+        item.querySelector('input[name="company[]"]').value = exp.company || '';
+        item.querySelector('input[name="startDate[]"]').value = exp.startDate || '';
+        item.querySelector('input[name="endDate[]"]').value = exp.endDate || '';
+        item.querySelector('textarea[name="description[]"]').value = exp.description || '';
+    });
+
+    const eduContainer = document.getElementById('educationContainer');
+    eduContainer.innerHTML = '';
+    (r.education || []).forEach(edu => {
+        addEducation();
+        const item = eduContainer.lastElementChild;
+        item.querySelector('input[name="degree[]"]').value = edu.degree || '';
+        item.querySelector('input[name="school[]"]').value = edu.school || '';
+        item.querySelector('input[name="gradYear[]"]').value = edu.gradYear || '';
+        item.querySelector('input[name="gpa[]"]').value = edu.gpa || '';
+    });
+
+    const projContainer = document.getElementById('projectsContainer');
+    projContainer.innerHTML = '';
+    (r.projects || []).forEach(p => {
+        addProject();
+        const item = projContainer.lastElementChild;
+        item.querySelector('input[name="projectName[]"]').value = p.name || '';
+        item.querySelector('input[name="projectUrl[]"]').value = p.url || '';
+        item.querySelector('textarea[name="projectDescription[]"]').value = p.description || '';
+    });
+
+    skills = Array.isArray(r.skills) ? r.skills : [];
+    updateSkillsDisplay();
+}
+
+function localResumeTemplate(payload){
+    const fullName = `${payload.firstName || 'John'} ${payload.lastName || 'Doe'}`.trim();
+    const now = new Date();
+    const gradYear = String(now.getFullYear());
+    return {
+        firstName: payload.firstName || 'John',
+        lastName: payload.lastName || 'Doe',
+        email: payload.email || 'john.doe@example.com',
+        phone: payload.phone || '+1-555-555-5555',
+        location: 'Your City, Country',
+        linkedin: 'https://www.linkedin.com/in/your-profile',
+        summary: `Motivated software developer seeking opportunities. Strong fundamentals, project experience, and a passion for learning.`,
+        experience: [
+            {
+                jobTitle: 'Software Engineering Intern',
+                company: 'Tech Corp',
+                startDate: '06/2024',
+                endDate: '08/2024',
+                description: 'Built features with React and Flask. Improved page performance by 25%. Wrote unit tests.'
+            }
+        ],
+        education: [
+            { degree: 'B.Tech in Computer Science', school: 'ABC University', gradYear: gradYear, gpa: '8.2/10' }
+        ],
+        skills: ['Python', 'Flask', 'JavaScript', 'React', 'SQL'],
+        projects: [
+            { name: 'Portfolio Website', url: 'https://yourdomain.com', description: 'Personal portfolio with responsive UI and contact form.' }
+        ]
+    };
+}
+
+function applyFonts(){
+    const nameFont = document.getElementById('fontName').value;
+    const headingFont = document.getElementById('fontHeadings').value;
+    const bodyFont = document.getElementById('fontBody').value;
+    
+    document.getElementById('previewName').style.fontFamily = nameFont;
+    document.querySelectorAll('.preview-section h5').forEach(h => h.style.fontFamily = headingFont);
+    document.getElementById('resumePreview').style.fontFamily = bodyFont;
+}
+
+function showMessage(message, type) {
+    const alertClass = type === 'error' ? 'danger' : type;
+    const alertHtml = `
+        <div class="alert alert-${alertClass} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    // Insert at the top of the container
+    const container = document.querySelector('.container');
+    container.insertAdjacentHTML('afterbegin', alertHtml);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        const alert = container.querySelector('.alert');
+        if (alert) {
+            const alertInstance = new bootstrap.Alert(alert);
+            alertInstance.close();
+        }
+    }, 5000);
 }
 </script>
 {% endblock %}

@@ -1,120 +1,364 @@
 {% extends "base.html" %}
 {% block title %}AI Interview - Web-Inter-Prep{% endblock %}
+
 {% block content %}
-
 <div class="container py-4">
-  <h2 class="mb-3">AI Interview</h2>
+  <div class="row g-4">
+    <div class="col-lg-4">
+      <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white"><i class="fas fa-sliders-h me-2"></i>Setup</div>
+        <div class="card-body">
+          <div class="mb-2">
+            <label class="form-label">Role</label>
+            <input id="role" class="form-control" value="Backend Engineer">
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Level</label>
+            <select id="level" class="form-select">
+              <option>Fresher</option><option>Junior</option><option>Mid</option><option>Senior</option>
+            </select>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Company (optional)</label>
+            <input id="company" class="form-control" placeholder="e.g., Any mid-size">
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Number of Questions</label>
+            <select id="questionCount" class="form-select">
+              <option value="3">3 Questions</option>
+              <option value="5" selected>5 Questions</option>
+              <option value="10">10 Questions</option>
+              <option value="15">15 Questions</option>
+            </select>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Time Limit (minutes)</label>
+            <select id="timeLimit" class="form-select">
+              <option value="15">15 minutes</option>
+              <option value="30" selected>30 minutes</option>
+              <option value="45">45 minutes</option>
+              <option value="60">60 minutes</option>
+            </select>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Topic Focus</label>
+            <select id="topicFocus" class="form-select">
+              <option value="technical" selected>Technical</option>
+              <option value="behavioral">Behavioral</option>
+              <option value="system-design">System Design</option>
+              <option value="mixed">Mixed</option>
+            </select>
+          </div>
+          <button id="startBtn" class="btn btn-success w-100"><i class="fas fa-play me-2"></i>Start Interview</button>
+          <div id="metaBox" class="small text-muted mt-3 d-none">Session: <span id="sessionId"></span> • Round: <span id="roundNo">0</span></div>
+        </div>
+      </div>
 
-  <!-- Question card -->
-  <div class="card mb-3">
-    <div class="card-body">
-      <div id="topic" class="text-muted small"></div>
-      <div id="question" class="fs-5 fw-semibold">Loading question...</div>
-
-      <textarea id="answerBox" name="answer" rows="6" class="form-control mt-3" placeholder="Type your answer here..." required></textarea>
-      <div class="mt-3 d-flex gap-2">
-        <button id="submitBtn" class="btn btn-primary" type="button">Submit Answer</button>
-        <a class="btn btn-outline-secondary" href="/mock/results">End Interview</a>
+      <div class="card shadow-sm mt-3">
+        <div class="card-header bg-secondary text-white"><i class="fas fa-chart-line me-2"></i>Score & Progress</div>
+        <div class="card-body">
+          <div id="timerBox" class="mb-2">
+            <small class="text-muted">Time Remaining: <span id="timeRemaining">--:--</span></small>
+            <div class="progress mt-1" style="height: 6px;">
+              <div id="timeProgress" class="progress-bar bg-warning" style="width: 100%"></div>
+            </div>
+          </div>
+          <div id="progressBox" class="mb-2">
+            <small class="text-muted">Questions: <span id="currentQuestionNum">0</span>/<span id="totalQuestions">5</span></small>
+            <div class="progress mt-1" style="height: 6px;">
+              <div id="questionProgress" class="progress-bar bg-info" style="width: 0%"></div>
+            </div>
+          </div>
+          <div id="scoreBox" class="text-muted">No score yet.</div>
+          <div id="feedbackBox" class="mt-2"></div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Feedback -->
-  <div id="feedback"></div>
+    <div class="col-lg-8">
+      <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+          <span><i class="fas fa-robot me-2"></i>AI Interviewer</span>
+          <button id="endBtn" class="btn btn-sm btn-outline-light" disabled><i class="fas fa-flag-checkered me-1"></i>End Session</button>
+        </div>
+        <div class="card-body" style="height:540px; display:flex; flex-direction:column;">
+          <div id="chat" style="flex:1; overflow:auto; padding-right:4px;"></div>
+          <div class="mt-2">
+            <textarea id="answer" class="form-control" rows="4" placeholder="Type answer..."></textarea>
+            <div class="d-flex gap-2 mt-2">
+              <button id="sendBtn" class="btn btn-primary" disabled><i class="fas fa-paper-plane me-2"></i>Submit Answer</button>
+              <button id="hintBtn" class="btn btn-outline-secondary" disabled><i class="fas fa-lightbulb me-2"></i>Hint</button>
+              <button id="repeatBtn" class="btn btn-outline-secondary" disabled><i class="fas fa-redo me-2"></i>Repeat Question</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="tips" class="alert alert-info mt-3 d-none"></div>
+    </div>
+  </div>
 </div>
 
 <script>
-let currentQuestion = "";
-let currentTopic = "";
+function showToast(title, msg){
+  const id='simpleToast'; let el=document.getElementById(id);
+  if(!el){ el=document.createElement('div'); el.id=id; el.style.position='fixed'; el.style.right='20px'; el.style.bottom='20px'; el.style.zIndex='1080'; document.body.appendChild(el); }
+  const item=document.createElement('div'); item.className='toast align-items-center text-bg-dark border-0 show';
+  item.role='alert'; item.style.minWidth='280px';
+  item.innerHTML=`<div class="d-flex"><div class="toast-body"><strong>${title}</strong><br>${msg}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>`;
+  el.appendChild(item); setTimeout(()=>item.remove(),3000);
+}
 
-async function startInterview() {
-  try {
-    const role = "Software Engineer";   // or read from query/form later
-    const level = "Fresher";
-    const company = "Any";
-    const res = await fetch("/api/ai-interview/start", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({ role, level, company })
+let currentQuestion = ""; let currentTopic = ""; let round = 0;
+let totalQuestions = 5; let timeLimit = 30; let timeRemaining = 0; let timerInterval = null;
+let totalScore = 0; let questionsAnswered = 0;
+
+function addMsg(text, role){
+  const chat = document.getElementById('chat');
+  const wrap = document.createElement('div');
+  wrap.className = 'mb-2';
+  const bubble = document.createElement('div');
+  bubble.className = role==='ai' ? 'p-2 rounded bg-light' : 'p-2 rounded bg-primary text-white';
+  bubble.style.maxWidth='95%';
+  bubble.innerHTML = text.replace(/\n/g,'<br>');
+  wrap.appendChild(bubble);
+  chat.appendChild(wrap);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+async function startInterview(){
+  const btn = document.getElementById('startBtn'); const endBtn=document.getElementById('endBtn');
+  btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Starting...';
+  
+  // Get configuration
+  totalQuestions = parseInt(document.getElementById('questionCount').value);
+  timeLimit = parseInt(document.getElementById('timeLimit').value);
+  const topicFocus = document.getElementById('topicFocus').value;
+  
+  // Update UI
+  document.getElementById('totalQuestions').textContent = totalQuestions;
+  document.getElementById('currentQuestionNum').textContent = '0';
+  document.getElementById('questionProgress').style.width = '0%';
+  
+  try{
+    const res = await fetch('/api/ai-interview/start', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        role: document.getElementById('role').value || 'Software Engineer',
+        level: document.getElementById('level').value || 'Fresher',
+        company: document.getElementById('company').value || 'Any',
+        topic: topicFocus,
+        questionCount: totalQuestions,
+        timeLimit: timeLimit
+      })
     });
     const data = await res.json();
-    if (!data.ok) { alert(data.error || "Failed to start interview"); return; }
-    currentQuestion = data.question || "Tell me about yourself.";
-    currentTopic = data.topic || "General";
-    renderQuestion();
-  } catch (e) {
-    console.error(e);
-    alert("Could not start interview.");
-  }
-}
+    if(!data.ok) throw new Error(data.error || 'Failed to start');
+    
+    document.getElementById('sessionId').textContent = data.session_id;
+    document.getElementById('metaBox').classList.remove('d-none');
+    round = 1; document.getElementById('roundNo').textContent = String(round);
+    currentQuestion = data.question; currentTopic = data.topic || 'General';
+    document.getElementById('sendBtn').disabled = false;
+    document.getElementById('hintBtn').disabled = false;
+    document.getElementById('repeatBtn').disabled = false;
+    endBtn.disabled = false;
 
-function renderQuestion() {
-  document.getElementById("question").innerText = currentQuestion;
-  document.getElementById("topic").innerText = currentTopic ? `Topic: ${currentTopic}` : "";
-}
+    // Start timer
+    timeRemaining = timeLimit * 60; // Convert to seconds
+    startTimer();
 
-function renderFeedback(ev) {
-  const bullets = (arr)=> (arr||[]).map(x=>`<li>${x}</li>`).join("");
-  document.getElementById("feedback").innerHTML = `
-    <div class="card">
-      <div class="card-body">
-        <div><strong>Score:</strong> ${ev.score_10 ?? "-"} / 10</div>
-        <div><strong>Verdict:</strong> ${ev.verdict ?? "-"}</div>
-        <div class="row mt-2">
-          <div class="col-md-6">
-            <strong>Strengths</strong>
-            <ul>${bullets(ev.strengths)}</ul>
-          </div>
-          <div class="col-md-6">
-            <strong>Improvements</strong>
-            <ul>${bullets(ev.improvements)}</ul>
-          </div>
-        </div>
-        <div class="mt-2">
-          <strong>Ideal answer</strong>
-          <div class="mt-1">${(ev.ideal_answer || "").replace(/\n/g, "<br>")}</div>
-        </div>
-      </div>
-    </div>`;
-}
-
-async function submitAnswer() {
-  const box = document.getElementById("answerBox");
-  const btn = document.getElementById("submitBtn");
-  const ans = box.value.trim();
-  if (!ans) { alert("Write your answer"); return; }
-
-  btn.disabled = true;
-  const original = btn.innerHTML;
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Evaluating...';
-
-  try {
-    const res = await fetch("/api/ai-interview/answer", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({ question: currentQuestion, answer: ans })
-    });
-    const data = await res.json();
-    if (!data.ok) { alert(data.error || "Failed to evaluate"); return; }
-    renderFeedback(data.evaluation);
-    currentQuestion = data.next_question || "";
-    currentTopic = data.next_topic || "";
-    box.value = "";
-    if (currentQuestion) renderQuestion();
-    else document.getElementById("question").innerText = "Interview complete.";
-  } catch (e) {
-    console.error(e);
-    alert("Submit failed.");
-  } finally {
-    btn.innerHTML = original;
+    document.getElementById('chat').innerHTML = '';
+    addMsg(`<strong>${currentTopic}</strong>: ${currentQuestion}`, 'ai');
+    
+    // Update progress
+    updateProgress();
+  }catch(e){
+    showToast("AI Interview", e.message);
+  }finally{
+    btn.innerHTML = '<i class="fas fa-play me-2"></i>Start Interview';
     btn.disabled = false;
   }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("submitBtn").addEventListener("click", submitAnswer);
-  startInterview();
-});
-</script>
+async function submitAnswer(){
+  const send = document.getElementById('sendBtn'); send.disabled = true;
+  const ans = document.getElementById('answer').value.trim();
+  if(!ans){ showToast("Answer", "Please type your answer."); send.disabled=false; return; }
+  
+  // Show user's answer
+  addMsg(ans, 'me');
+  document.getElementById('answer').value = '';
+  
+  // Show loading message
+  addMsg('<div class="text-muted"><i class="fas fa-spinner fa-spin me-2"></i>AI is evaluating your answer...</div>', 'ai');
+  
+  try{
+    const res = await fetch('/api/ai-interview/answer', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ question: currentQuestion, answer: ans })
+    });
+    const data = await res.json();
+    if(!data.ok) throw new Error(data.error || 'Evaluation failed');
 
+    // Score panel
+    const ev = data.evaluation || {};
+    const score = ev.score_10 || 0;
+    totalScore += score;
+    questionsAnswered++;
+    
+    // Update score display
+    const avgScore = Math.round(totalScore / questionsAnswered);
+    document.getElementById('scoreBox').innerHTML =
+      `Current Score: <strong>${score}/10</strong> • Average: <strong>${avgScore}/10</strong> • Total: <strong>${totalScore}/${questionsAnswered * 10}</strong>
+       <div class="small text-muted">Verdict: ${ev.verdict || '-'} | Correctness ${ev.correctness ?? '-'}, Clarity ${ev.clarity ?? '-'}, Depth ${ev.depth ?? '-'}, Conciseness ${ev.conciseness ?? '-'}</div>`;
+    
+    // Feedback bullets
+    const fb = [];
+    if (Array.isArray(ev.strengths) && ev.strengths.length) fb.push('<div class="fw-semibold mt-2">Strengths</div><ul>'+ev.strengths.map(x=>`<li>${x}</li>`).join('')+'</ul>');
+    if (Array.isArray(ev.improvements) && ev.improvements.length) fb.push('<div class="fw-semibold">Improvements</div><ul>'+ev.improvements.map(x=>`<li>${x}</li>`).join('')+'</ul>');
+    if (ev.ideal_answer) fb.push('<div class="fw-semibold">Ideal Answer</div><div class="small">'+ev.ideal_answer.replace(/\n/g,'<br>')+'</div>');
+    document.getElementById('feedbackBox').innerHTML = fb.join('');
+
+    // Update progress
+    updateProgress();
+
+    // Check if interview is complete
+    if (data.interview_complete || questionsAnswered >= totalQuestions) {
+      endInterview();
+      return;
+    }
+
+    // Remove loading message and show rating prominently
+    const chat = document.getElementById('chat');
+    const lastMessage = chat.lastElementChild;
+    if (lastMessage && lastMessage.textContent.includes('AI is evaluating')) {
+      lastMessage.remove();
+    }
+    
+    addMsg(`<div class="alert alert-success"><strong>Question ${questionsAnswered} Rating: ${score}/10</strong><br>Verdict: ${ev.verdict || '-'}</div>`, 'ai');
+
+    // Next question
+    round = data.round || (round+1);
+    document.getElementById('roundNo').textContent = String(round);
+    currentQuestion = data.next_question;
+    currentTopic = data.next_topic || 'General';
+    
+    // Add a small delay before showing next question
+    setTimeout(() => {
+      addMsg(`<strong>Question ${round}: ${currentTopic}</strong><br>${currentQuestion}`, 'ai');
+    }, 1500);
+  }catch(e){
+    console.error("AI Interview Error:", e);
+    showToast("AI Interview", "Error: " + e.message);
+    
+    // Remove loading message
+    const chat = document.getElementById('chat');
+    const lastMessage = chat.lastElementChild;
+    if (lastMessage && lastMessage.textContent.includes('AI is evaluating')) {
+      lastMessage.remove();
+    }
+    
+    // Show error message
+    addMsg('<div class="alert alert-danger">Sorry, there was an error evaluating your answer. Please try again.</div>', 'ai');
+  }finally{
+    send.disabled = false;
+  }
+}
+
+document.getElementById('startBtn').addEventListener('click', startInterview);
+document.getElementById('sendBtn').addEventListener('click', submitAnswer);
+document.getElementById('answer').addEventListener('keydown', (e)=>{ if(e.key==='Enter' && (e.ctrlKey||e.metaKey)) submitAnswer(); });
+
+document.getElementById('hintBtn').addEventListener('click', ()=>{
+  const tip = "Structure answers: brief intro, 3-4 key points with examples, and a concise wrap-up.";
+  const tips = document.getElementById('tips'); tips.classList.remove('d-none'); tips.textContent = tip;
+});
+document.getElementById('repeatBtn').addEventListener('click', ()=>{
+  addMsg(`<strong>${currentTopic}</strong>: ${currentQuestion}`, 'ai');
+});
+// Timer functions
+function startTimer() {
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    timeRemaining--;
+    updateTimerDisplay();
+    
+    if (timeRemaining <= 0) {
+      endInterview();
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const minutes = Math.floor(timeRemaining / 60);
+  const seconds = timeRemaining % 60;
+  document.getElementById('timeRemaining').textContent = 
+    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  
+  // Update progress bar
+  const progress = (timeRemaining / (timeLimit * 60)) * 100;
+  const progressBar = document.getElementById('timeProgress');
+  progressBar.style.width = `${progress}%`;
+  
+  // Change color based on remaining time
+  if (progress <= 20) {
+    progressBar.className = 'progress-bar bg-danger';
+  } else if (progress <= 40) {
+    progressBar.className = 'progress-bar bg-warning';
+  } else {
+    progressBar.className = 'progress-bar bg-success';
+  }
+}
+
+function updateProgress() {
+  document.getElementById('currentQuestionNum').textContent = questionsAnswered;
+  const questionProgress = (questionsAnswered / totalQuestions) * 100;
+  document.getElementById('questionProgress').style.width = `${questionProgress}%`;
+}
+
+function endInterview() {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+  
+  const finalScore = Math.round(totalScore / questionsAnswered);
+  const percentage = Math.round((totalScore / (questionsAnswered * 10)) * 100);
+  
+  showToast("Interview Complete", `Final Score: ${finalScore}/10 (${percentage}%)`);
+  
+  // Disable all buttons
+  document.getElementById('sendBtn').disabled = true;
+  document.getElementById('hintBtn').disabled = true;
+  document.getElementById('repeatBtn').disabled = true;
+  document.getElementById('endBtn').disabled = true;
+  
+  // Show final results with better formatting
+  addMsg(`<div class="alert alert-primary">
+    <h5><i class="fas fa-trophy me-2"></i>Interview Complete!</h5>
+    <div class="row">
+      <div class="col-6">
+        <strong>Questions:</strong> ${questionsAnswered}/${totalQuestions}<br>
+        <strong>Final Score:</strong> ${finalScore}/10<br>
+        <strong>Percentage:</strong> ${percentage}%
+      </div>
+      <div class="col-6">
+        <strong>Total Points:</strong> ${totalScore}/${questionsAnswered * 10}<br>
+        <strong>Average:</strong> ${finalScore}/10<br>
+        <strong>Performance:</strong> ${percentage >= 80 ? 'Excellent' : percentage >= 60 ? 'Good' : percentage >= 40 ? 'Average' : 'Needs Improvement'}
+      </div>
+    </div>
+  </div>`, 'ai');
+  
+  // Update final score in score box
+  document.getElementById('scoreBox').innerHTML = 
+    `<div class="text-center">
+      <h4 class="text-success">Final Score: ${finalScore}/10</h4>
+      <p class="mb-0">${percentage}% - ${percentage >= 80 ? 'Excellent!' : percentage >= 60 ? 'Good job!' : percentage >= 40 ? 'Keep practicing!' : 'More practice needed!'}</p>
+    </div>`;
+}
+
+document.getElementById('endBtn').addEventListener('click', endInterview);
+</script>
 {% endblock %}

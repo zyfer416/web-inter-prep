@@ -12,6 +12,7 @@ let sessionStartTime = null;
 document.addEventListener('DOMContentLoaded', function() {
     initializeApp();
     initializeMoreDropdown();
+    initializeScrollReveal();
 });
 
 /**
@@ -134,6 +135,26 @@ function addFadeInAnimation() {
         setTimeout(() => {
             card.classList.add('fade-in');
         }, index * 100);
+    });
+}
+
+/**
+ * Reveal elements on scroll using IntersectionObserver
+ */
+function initializeScrollReveal() {
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('reveal-in');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+
+    const revealables = document.querySelectorAll('.reveal-on-scroll, .card, .btn, .list-group-item');
+    revealables.forEach(el => {
+        el.classList.add('reveal-on-scroll');
+        observer.observe(el);
     });
 }
 
