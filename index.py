@@ -65,7 +65,12 @@ def init_db():
     conn.close()
 
 # Initialize database
-init_db()
+try:
+    init_db()
+    print("✅ Database initialized successfully")
+except Exception as e:
+    print(f"⚠️  Database initialization warning: {e}")
+    # Continue anyway - database will be created when needed
 
 # Routes
 @app.route('/')
