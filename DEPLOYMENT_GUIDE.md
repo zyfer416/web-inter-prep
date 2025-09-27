@@ -1,127 +1,176 @@
 # 🚀 Web-Inter-Prep Deployment Guide
 
-## 🌐 Deploy to Render (Free Hosting)
+## 📋 Overview
+This guide covers deploying the Web-Inter-Prep application with Google OAuth and Gemini AI integration on Render.
 
-Your Flask application is now ready for deployment to Render! Follow these steps:
+## 🔧 Environment Variables Required
 
-### 📋 Prerequisites
-- GitHub account (free)
-- Render account (free)
+### **Required for Google OAuth:**
+```
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+```
 
-### 🔧 Step 1: Push to GitHub
+### **Required for Gemini AI:**
+```
+GEMINI_API_KEY=your_gemini_api_key
+GEMINI_MODEL=gemini-2.0-flash
+```
 
-1. **Create a new repository on GitHub:**
-   - Go to [github.com](https://github.com)
-   - Click "New repository"
-   - Name it: `web-inter-prep`
-   - Make it public
-   - Don't initialize with README (we already have one)
+### **Required for Flask:**
+```
+SECRET_KEY=your_secret_key_here
+FLASK_ENV=production
+```
 
-2. **Add GitHub as remote origin:**
-   ```bash
-   git remote add origin https://github.com/YOUR_USERNAME/web-inter-prep.git
-   git branch -M main
-   git push -u origin main
-   ```
+## 🛠️ Setup Instructions
 
-### 🚀 Step 2: Deploy to Render
+### 1. **Google OAuth Setup**
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select existing one
+3. Enable Google+ API
+4. Go to "Credentials" → "Create Credentials" → "OAuth 2.0 Client ID"
+5. Set authorized redirect URIs:
+   - Development: `http://localhost:5000/login/google/callback`
+   - Production: `https://your-app.onrender.com/login/google/callback`
 
-1. **Go to Render:**
-   - Visit [render.com](https://render.com)
-   - Sign up/Login with your GitHub account
+### 2. **Gemini AI Setup**
+1. Go to [Google AI Studio](https://aistudio.google.com/)
+2. Create a new API key
+3. Copy the API key for `GEMINI_API_KEY`
 
-2. **Create New Web Service:**
-   - Click "New +"
-   - Select "Web Service"
-   - Connect your GitHub repository
-   - Select `web-inter-prep`
+### 3. **Render Deployment**
+1. Connect your GitHub repository to Render
+2. Set environment variables in Render dashboard
+3. Deploy using the provided `render.yaml`
 
-3. **Configure the Service:**
-   - **Name:** `web-inter-prep`
-   - **Environment:** `Python 3`
-   - **Build Command:** `pip install -r requirements.txt`
-   - **Start Command:** `gunicorn app_production:app`
-   - **Plan:** Free
+## 📁 File Structure
+```
+web-inter-prep/
+├── app.py                    # Main Flask application
+├── render.yaml              # Render deployment config
+├── requirements.txt         # Python dependencies
+├── frontend/
+│   ├── templates/          # HTML templates
+│   └── static/             # CSS, JS, images
+└── backend/
+    └── data/
+        └── questions.json   # Sample questions
+```
 
-4. **Environment Variables (Optional):**
-   - `FLASK_ENV`: `production`
-   - `SECRET_KEY`: Generate a random string for security
+## 🔑 Key Features
 
-5. **Click "Create Web Service"**
+### **Authentication:**
+- ✅ Regular email/password login
+- ✅ Google OAuth integration
+- ✅ Session management
+- ✅ User registration
 
-### ⏱️ Deployment Time
-- **First deployment:** 5-10 minutes
-- **Subsequent updates:** 2-5 minutes
+### **AI Features:**
+- ✅ Gemini AI-powered interview questions
+- ✅ Real-time AI feedback
+- ✅ Customizable interview parameters
+- ✅ JSON response parsing
 
-### 🔄 Future Updates
+### **Database:**
+- ✅ SQLite with persistent storage
+- ✅ User management
+- ✅ Interview tracking
+- ✅ Statistics dashboard
 
-After making changes locally, simply run:
+## 🚀 Deployment Commands
+
+### **Local Development:**
 ```bash
-./deploy.sh
+# Install dependencies
+pip install -r requirements.txt
+
+# Set environment variables
+export GOOGLE_CLIENT_ID="your_client_id"
+export GOOGLE_CLIENT_SECRET="your_client_secret"
+export GEMINI_API_KEY="your_gemini_key"
+export SECRET_KEY="your_secret_key"
+
+# Run application
+python app.py
 ```
 
-This will:
-- Add all changes
-- Commit with timestamp
-- Push to GitHub
-- Trigger automatic deployment on Render
-
-### 🌐 Your Public URL
-
-Once deployed, your app will be available at:
-```
-https://web-inter-prep.onrender.com
-```
-
-### 📱 Features Available After Deployment
-
-✅ **User Registration & Login**
-✅ **DSA Practice with Solutions**
-✅ **Dashboard with Statistics**
-✅ **Mock Interview System**
-✅ **Career Roadmap**
-✅ **Resources Section**
-✅ **Responsive Design**
-✅ **Database Persistence**
-
-### 🛠️ Troubleshooting
-
-**If deployment fails:**
-1. Check Render logs for errors
-2. Ensure all files are committed
-3. Verify requirements.txt is correct
-4. Check if port 5000 is available
-
-**Common issues:**
-- Database connection errors (normal for first deployment)
-- Missing dependencies (check requirements.txt)
-- Port conflicts (Render handles this automatically)
-
-### 🔒 Security Notes
-
-- Production secret key is automatically generated
-- Database is isolated per deployment
-- HTTPS is automatically enabled
-- Session management is secure
-
-### 📊 Monitoring
-
-- Render provides built-in monitoring
-- Check deployment status in dashboard
-- View logs for debugging
-- Monitor performance metrics
-
----
-
-## 🎯 Quick Deploy Commands
-
+### **Render Deployment:**
 ```bash
-# Initial setup
-git remote add origin https://github.com/YOUR_USERNAME/web-inter-prep.git
-git push -u origin main
+# Push to GitHub
+git add .
+git commit -m "Deploy with Google OAuth and Gemini AI"
+git push origin main
 
-# Future updates
-./deploy.sh
+# Render will automatically deploy
 ```
 
-Your interview preparation platform will be live and accessible to anyone worldwide! 🌍
+## 🔍 Testing Checklist
+
+### **Authentication:**
+- [ ] Regular login works
+- [ ] Registration works
+- [ ] Google OAuth login works
+- [ ] Session persistence works
+- [ ] Logout works
+
+### **AI Features:**
+- [ ] Gemini API key configured
+- [ ] AI interview questions generate
+- [ ] AI feedback works
+- [ ] JSON parsing works
+- [ ] Fallback responses work
+
+### **Database:**
+- [ ] Database initializes
+- [ ] User data persists
+- [ ] Interview data tracks
+- [ ] Statistics calculate
+
+## 🐛 Troubleshooting
+
+### **Common Issues:**
+
+1. **Google OAuth not working:**
+   - Check redirect URIs in Google Console
+   - Verify environment variables
+   - Check OAuth scope configuration
+
+2. **Gemini AI not responding:**
+   - Verify API key is correct
+   - Check API quota limits
+   - Test with fallback responses
+
+3. **Database errors:**
+   - Check database path configuration
+   - Verify file permissions
+   - Check SQLite initialization
+
+## 📊 Monitoring
+
+### **Render Dashboard:**
+- Check deployment logs
+- Monitor environment variables
+- View application metrics
+
+### **Application Logs:**
+- Database initialization status
+- API call responses
+- Error messages and stack traces
+
+## 🎯 Success Criteria
+
+✅ **All systems operational:**
+- Authentication: Working
+- Database: Working  
+- API: Working
+- Google OAuth: Working
+- Gemini AI: Working
+
+## 📞 Support
+
+If you encounter issues:
+1. Check the deployment logs in Render
+2. Verify all environment variables are set
+3. Test locally first
+4. Check API quotas and limits
