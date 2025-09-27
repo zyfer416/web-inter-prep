@@ -545,7 +545,7 @@ def login():
         password = request.form['password']
         
         db_path = os.path.join(os.path.dirname(__file__), 'interview_prep.db')
-    conn = sqlite3.connect(db_path)
+        conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         cursor.execute('SELECT id, name, password_hash FROM users WHERE email = ?', (email,))
         user = cursor.fetchone()
@@ -574,7 +574,7 @@ def register():
         
         try:
             db_path = os.path.join(os.path.dirname(__file__), 'interview_prep.db')
-    conn = sqlite3.connect(db_path)
+            conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
             cursor.execute('INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)',
                            (name, email, password_hash))
@@ -1225,7 +1225,12 @@ def calendar():
     return render_template('calendar.html')
 
 
-from services.gemini_client import ask_gemini
+try:
+    from services.gemini_client import ask_gemini
+except ImportError:
+    # Fallback if services module not found
+    def ask_gemini(prompt):
+        return "AI service not available"
 
 @app.route("/api/gemini/qa", methods=["POST"])
 def gemini_qa():
