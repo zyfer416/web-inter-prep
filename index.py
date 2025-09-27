@@ -15,11 +15,20 @@ app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-product
 # Configure for production
 app.config['DEBUG'] = False
 
+# Helper function to get database path
+def get_db_path():
+    """Get the appropriate database path based on environment"""
+    if os.environ.get('RENDER'):
+        # Production environment (Render)
+        return os.path.join(os.path.expanduser('~'), 'interview_prep.db')
+    else:
+        # Development environment
+        return os.path.join(os.path.dirname(__file__), 'interview_prep.db')
+
 # Database initialization
 def init_db():
     """Initialize the SQLite database with required tables"""
-    # Use a persistent path for Render
-    db_path = os.path.join(os.path.expanduser('~'), 'interview_prep.db')
+    db_path = get_db_path()
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
@@ -90,20 +99,24 @@ def login():
         email = request.form['email']
         password = request.form['password']
         
-        db_path = os.path.join(os.path.expanduser('~'), 'interview_prep.db')
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
-        cursor.execute('SELECT id, name, password_hash FROM users WHERE email = ?', (email,))
-        user = cursor.fetchone()
-        conn.close()
-        
-        if user and check_password_hash(user[2], password):
-            session['user_id'] = user[0]
-            session['user_name'] = user[1]
-            flash('Login successful!', 'success')
-            return redirect(url_for('dashboard'))
-        else:
-            flash('Invalid email or password', 'error')
+        try:
+            # Use consistent database path
+            db_path = get_db_path()
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            cursor.execute('SELECT id, name, password_hash FROM users WHERE email = ?', (email,))
+            user = cursor.fetchone()
+            conn.close()
+            
+            if user and check_password_hash(user[2], password):
+                session['user_id'] = user[0]
+                session['user_name'] = user[1]
+                flash('Login successful!', 'success')
+                return redirect(url_for('dashboard'))
+            else:
+                flash('Invalid email or password', 'error')
+        except Exception as e:
+            flash(f'Login error: {str(e)}', 'error')
     
     return render_template('login.html')
 
@@ -115,11 +128,20 @@ def register():
         email = request.form['email']
         password = request.form['password']
         
+        # Basic validation
+        if not name or not email or not password:
+            flash('All fields are required', 'error')
+            return render_template('register.html')
+        
+        if len(password) < 6:
+            flash('Password must be at least 6 characters long', 'error')
+            return render_template('register.html')
+        
         # Hash the password
         password_hash = generate_password_hash(password)
         
         try:
-            db_path = os.path.join(os.path.dirname(__file__), 'interview_prep.db')
+            db_path = get_db_path()
             conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
             cursor.execute('INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)',
@@ -131,6 +153,8 @@ def register():
             return redirect(url_for('login'))
         except sqlite3.IntegrityError:
             flash('Email already exists', 'error')
+        except Exception as e:
+            flash(f'Registration error: {str(e)}', 'error')
     
     return render_template('register.html')
 
@@ -141,39 +165,51 @@ def dashboard():
         flash('Please login to access dashboard', 'error')
         return redirect(url_for('login'))
     
-    # Get user statistics
-    db_path = os.path.join(os.path.expanduser('~'), 'interview_prep.db')
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    
-    # Total questions attempted
-    cursor.execute('SELECT COUNT(*) FROM attempts WHERE user_id = ?', (session['user_id'],))
-    total_attempted = cursor.fetchone()[0]
-    
-    # Correct answers
-    cursor.execute('SELECT COUNT(*) FROM attempts WHERE user_id = ? AND correct = 1', (session['user_id'],))
-    correct_answers = cursor.fetchone()[0]
-    
-    # Total mock interviews taken
-    cursor.execute('SELECT COUNT(*) FROM mock_sessions WHERE user_id = ?', (session['user_id'],))
-    total_interviews = cursor.fetchone()[0]
-    
-    conn.close()
-    
-    # Calculate accuracy
-    accuracy = (correct_answers / total_attempted * 100) if total_attempted > 0 else 0
-    
-    stats = {
-        'total_attempted': total_attempted,
-        'correct_answers': correct_answers,
-        'accuracy': round(accuracy, 1),
-        'total_interviews': total_interviews,
-        'current_streak': 0,
-        'weak_topics': [],
-        'recent_interviews': []
-    }
-    
-    return render_template('dashboard.html', stats=stats)
+    try:
+        # Get user statistics
+        db_path = get_db_path()
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        
+        # Total questions attempted
+        cursor.execute('SELECT COUNT(*) FROM attempts WHERE user_id = ?', (session['user_id'],))
+        total_attempted = cursor.fetchone()[0]
+        
+        # Correct answers
+        cursor.execute('SELECT COUNT(*) FROM attempts WHERE user_id = ? AND correct = 1', (session['user_id'],))
+        correct_answers = cursor.fetchone()[0]
+        
+        # Total mock interviews taken
+        cursor.execute('SELECT COUNT(*) FROM mock_sessions WHERE user_id = ?', (session['user_id'],))
+        total_interviews = cursor.fetchone()[0]
+        
+        conn.close()
+        
+        # Calculate accuracy
+        accuracy = (correct_answers / total_attempted * 100) if total_attempted > 0 else 0
+        
+        stats = {
+            'total_attempted': total_attempted,
+            'correct_answers': correct_answers,
+            'accuracy': round(accuracy, 1),
+            'total_interviews': total_interviews,
+            'current_streak': 0,
+            'weak_topics': [],
+            'recent_interviews': []
+        }
+        
+        return render_template('dashboard.html', stats=stats)
+    except Exception as e:
+        flash(f'Dashboard error: {str(e)}', 'error')
+        return render_template('dashboard.html', stats={
+            'total_attempted': 0,
+            'correct_answers': 0,
+            'accuracy': 0,
+            'total_interviews': 0,
+            'current_streak': 0,
+            'weak_topics': [],
+            'recent_interviews': []
+        })
 
 @app.route('/logout')
 def logout():
@@ -202,7 +238,7 @@ def mock_interview():
         return redirect(url_for('login'))
     
     # Create new mock session
-    db_path = os.path.join(os.path.dirname(__file__), 'interview_prep.db')
+    db_path = get_db_path()
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     cursor.execute('INSERT INTO mock_sessions (user_id) VALUES (?)', (session['user_id'],))
