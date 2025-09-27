@@ -22,7 +22,93 @@
 body {
     font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
+
+/* Main content background */
+main {
+    background-color: #f8f9fa;
+    min-height: calc(100vh - 200px);
+}
+
+/* Container background for better contrast */
+.container, .container-fluid {
+    background-color: transparent;
+}
+
+/* Card backgrounds for better visibility */
+.card {
     background-color: #ffffff;
+    border: 1px solid #e9ecef;
+}
+
+/* Page-specific backgrounds */
+.hero-section {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+}
+
+/* Dashboard specific backgrounds */
+.dashboard-content {
+    background-color: #f8f9fa;
+}
+
+/* Form backgrounds */
+.form-control, .form-select {
+    background-color: #ffffff;
+}
+
+/* Table backgrounds */
+.table {
+    background-color: #ffffff;
+}
+
+/* Alert backgrounds */
+.alert {
+    background-color: #ffffff;
+}
+
+/* Page-specific background improvements */
+.bg-light {
+    background-color: #f8f9fa !important;
+}
+
+/* Login/Register page backgrounds */
+.auth-container {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Practice page backgrounds */
+.practice-container {
+    background-color: #f8f9fa;
+}
+
+/* Mock interview backgrounds */
+.mock-interview-container {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Resume page backgrounds */
+.resume-container {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Career roadmap backgrounds */
+.roadmap-container {
+    background-color: #f8f9fa;
+}
+
+/* AI interview backgrounds */
+.ai-interview-container {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Smooth transitions globally for interactive elements */

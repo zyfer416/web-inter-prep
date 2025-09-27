@@ -1397,3 +1397,7 @@ def generate_resume():
 if __name__ == '__main__':
     # For development only; disable debug in production
     app.run(debug=True, host='0.0.0.0', port=8081, use_reloader=False)
+
+# For Vercel deployment
+def handler(request):
+    return app(request.environ, lambda status, headers: None)
