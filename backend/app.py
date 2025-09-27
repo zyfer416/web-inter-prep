@@ -13,7 +13,10 @@ import random
 load_dotenv()
 
 app = Flask(__name__, template_folder="../frontend/templates", static_folder="../frontend/static")
-app.secret_key = 'your-secret-key-change-in-production'  # Change this in production
+app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production')
+
+# Configure for production
+app.config['DEBUG'] = False
 
 # OAuth configuration (Google)
 oauth = OAuth(app)
@@ -32,10 +35,21 @@ if app.config['GOOGLE_CLIENT_ID'] and app.config['GOOGLE_CLIENT_SECRET']:
     )
     
 
+# Helper function to get database path
+def get_db_path():
+    """Get the appropriate database path based on environment"""
+    if os.environ.get('RENDER'):
+        # Production environment (Render)
+        return os.path.join(os.path.expanduser('~'), 'interview_prep.db')
+    else:
+        # Development environment
+        return os.path.join(os.path.dirname(__file__), 'interview_prep.db')
+
 # Database initialization
 def init_db():
     """Initialize the SQLite database with required tables"""
-    conn = sqlite3.connect('interview_prep.db')
+    db_path = get_db_path()
+    conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
     # Users table
@@ -128,7 +142,8 @@ def ai_interview_start():
     time_limit = body.get("timeLimit", 30)
 
     # Create a mock session row (reuse your schema)
-    conn = sqlite3.connect("interview_prep.db")
+    db_path = get_db_path()
+    conn = sqlite3.connect(db_path)
     cur = conn.cursor()
     cur.execute("INSERT INTO mock_sessions (user_id) VALUES (?)", (session["user_id"],))
     mock_session_id = cur.lastrowid
@@ -256,7 +271,8 @@ def ai_interview_answer():
 
     # Save attempt with feedback JSON stuffed in user_answer
     try:
-        conn = sqlite3.connect("interview_prep.db")
+        db_path = get_db_path()
+        conn = sqlite3.connect(db_path)
         cur = conn.cursor()
         cur.execute('''
             INSERT INTO attempts (user_id, question_id, correct, user_answer, mock_session_id)
@@ -543,7 +559,8 @@ def login():
         email = request.form['email']
         password = request.form['password']
         
-        conn = sqlite3.connect('interview_prep.db')
+        db_path = get_db_path()
+        conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         cursor.execute('SELECT id, name, password_hash FROM users WHERE email = ?', (email,))
         user = cursor.fetchone()
@@ -571,7 +588,8 @@ def register():
         password_hash = generate_password_hash(password)
         
         try:
-            conn = sqlite3.connect('interview_prep.db')
+            db_path = get_db_path()
+            conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
             cursor.execute('INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)',
                            (name, email, password_hash))
@@ -618,7 +636,8 @@ def auth_google_callback():
     name = userinfo.get('name') or email.split('@')[0]
 
     # Ensure local user exists
-    conn = sqlite3.connect('interview_prep.db')
+    db_path = get_db_path()
+    conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     cursor.execute('SELECT id, name FROM users WHERE email = ?', (email,))
     row = cursor.fetchone()
@@ -645,7 +664,8 @@ def dashboard():
         return redirect(url_for('login'))
     
     # Get user statistics
-    conn = sqlite3.connect('interview_prep.db')
+    db_path = get_db_path()
+    conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
     # Total questions attempted
@@ -856,7 +876,8 @@ def submit_answer():
     user_answer = data.get('user_answer', '')
     
     # Save attempt to database (no mock session in this path)
-    conn = sqlite3.connect('interview_prep.db')
+    db_path = get_db_path()
+    conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     cursor.execute('''
         INSERT INTO attempts (user_id, question_id, correct, user_answer)
@@ -873,7 +894,8 @@ def api_stats():
     if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
     
-    conn = sqlite3.connect('interview_prep.db')
+    db_path = get_db_path()
+    conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
     # Total questions attempted
@@ -904,7 +926,8 @@ def mock_interview():
         return redirect(url_for('login'))
     
     # Create new mock session
-    conn = sqlite3.connect('interview_prep.db')
+    db_path = get_db_path()
+    conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     cursor.execute('''
         INSERT INTO mock_sessions (user_id) VALUES (?)
@@ -948,7 +971,8 @@ def mock_submit_answer():
     correct = len(user_answer.strip()) > 10  # Basic check for substantial answer
     
     # Save attempt
-    conn = sqlite3.connect('interview_prep.db')
+    db_path = get_db_path()
+    conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     cursor.execute('''
         INSERT INTO attempts (user_id, question_id, correct, user_answer, mock_session_id)
@@ -976,7 +1000,8 @@ def end_mock_interview():
     questions_answered = session.get('mock_questions_answered', 0)
     
     # Get statistics for this session
-    conn = sqlite3.connect('interview_prep.db')
+    db_path = get_db_path()
+    conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
     # Prefer counting correct answers tied to this mock session; fallback to old time-window if none
@@ -1032,7 +1057,8 @@ def mock_results():
         return redirect(url_for('login'))
     
     # Get latest mock session
-    conn = sqlite3.connect('interview_prep.db')
+    db_path = get_db_path()
+    conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     cursor.execute('''
         SELECT total_questions, correct_answers, start_time, end_time
@@ -1087,7 +1113,8 @@ def feedback():
         flash('Please login to view feedback', 'error')
         return redirect(url_for('login'))
     
-    conn = sqlite3.connect('interview_prep.db')
+    db_path = get_db_path()
+    conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
     # Get recent attempts with question details
@@ -1213,7 +1240,7 @@ def calendar():
     return render_template('calendar.html')
 
 
-from services.gemini_client import ask_gemini
+from backend.services.gemini_client import ask_gemini
 
 @app.route("/api/gemini/qa", methods=["POST"])
 def gemini_qa():
