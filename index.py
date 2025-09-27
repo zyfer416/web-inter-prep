@@ -12,10 +12,14 @@ app = Flask(__name__,
            static_folder="frontend/static")
 app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production')
 
+# Configure for production
+app.config['DEBUG'] = False
+
 # Database initialization
 def init_db():
     """Initialize the SQLite database with required tables"""
-    db_path = os.path.join(os.path.dirname(__file__), 'interview_prep.db')
+    # Use a persistent path for Render
+    db_path = os.path.join(os.path.expanduser('~'), 'interview_prep.db')
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
@@ -81,7 +85,7 @@ def login():
         email = request.form['email']
         password = request.form['password']
         
-        db_path = os.path.join(os.path.dirname(__file__), 'interview_prep.db')
+        db_path = os.path.join(os.path.expanduser('~'), 'interview_prep.db')
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         cursor.execute('SELECT id, name, password_hash FROM users WHERE email = ?', (email,))
@@ -133,7 +137,7 @@ def dashboard():
         return redirect(url_for('login'))
     
     # Get user statistics
-    db_path = os.path.join(os.path.dirname(__file__), 'interview_prep.db')
+    db_path = os.path.join(os.path.expanduser('~'), 'interview_prep.db')
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
@@ -278,6 +282,7 @@ def internal_error(error):
     """Handle 500 errors"""
     return render_template('errors/500.html'), 500
 
-# For Vercel deployment
+# For Render deployment
 if __name__ == '__main__':
-    app.run(debug=False)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
