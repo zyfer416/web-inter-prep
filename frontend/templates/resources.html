@@ -226,6 +226,7 @@
         transform: translateY(-2px);
     }
 </style>
+
 {% endblock %}
 
 {% block content %}
@@ -554,9 +555,9 @@
                 <button type="button" class="btn btn-primary" id="nextBtn" onclick="changeStep(1)">
                     Next<i class="fas fa-arrow-right ms-2"></i>
                 </button>
-                <button type="button" class="btn btn-success" id="generateBtn" onclick="generateResume()" style="display: none;">
+                <!-- <button type="button" class="btn btn-success" id="generateBtn" onclick="generateResume()" style="display: none;">
                     <i class="fas fa-magic me-2"></i>Generate Preview
-                </button>
+                </button> -->
             </div>
         </form>
         </div>
@@ -570,6 +571,39 @@
     </div>
 </div>
 {% endblock %}
+<style>
+@media print {
+  /* Hide everything by default */
+  body * { visibility: hidden !important; }
+
+  /* Show only the resume preview area */
+  #resumePreview, #resumePreview * {
+    visibility: visible !important;
+  }
+
+  /* Position the preview at the top-left for clean pages */
+  #resumePreview {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 210mm;           /* target A4 width */
+    max-width: 210mm;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 16mm !important;  /* inner page margin */
+    font-size: inherit;
+  }
+
+  /* Remove header banner and any non-preview spacing */
+  .resume-header, .step-indicator, .progress, .resume-form, .loading-spinner, .container > .alert {
+    display: none !important;
+  }
+
+  /* Avoid colored backgrounds in print */
+  .preview-header { border-bottom: 1px solid #999 !important; }
+}
+</style>
 
 {% block extra_js %}
 <script>
@@ -1001,7 +1035,7 @@ function fillFormFromAI(r){
     if(r.linkedin) document.getElementById('linkedin').value = r.linkedin;
     if(r.summary) document.getElementById('summary').value = r.summary;
 
-    // Clear existing dynamic items except the first templates
+    // Clear and refill dynamic sections
     const expContainer = document.getElementById('experienceContainer');
     expContainer.innerHTML = '';
     (r.experience || []).forEach(exp => {
@@ -1102,5 +1136,7 @@ function showMessage(message, type) {
         }
     }, 5000);
 }
+
 </script>
+
 {% endblock %}

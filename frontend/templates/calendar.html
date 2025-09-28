@@ -4,611 +4,337 @@
 
 {% block extra_css %}
 <style>
-    .calendar-container {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        overflow: hidden;
-    }
-    
-    .calendar-header {
-        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-        color: white;
-        padding: 1.5rem;
-        text-align: center;
-    }
-    
-    .calendar-nav {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 1rem 1.5rem;
-        background: #f8f9fa;
-        border-bottom: 1px solid #dee2e6;
-    }
-    
-    .calendar-grid {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 1px;
-        background: #dee2e6;
-    }
-    
-    .calendar-day {
-        background: white;
-        min-height: 120px;
-        padding: 0.5rem;
-        position: relative;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-    
-    .calendar-day:hover {
-        background: #f8f9fa;
-    }
-    
-    .calendar-day.other-month {
-        background: #f8f9fa;
-        color: #6c757d;
-    }
-    
-    .calendar-day.today {
-        background: #e3f2fd;
-        border: 2px solid #2196f3;
-    }
-    
-    .calendar-day.has-interview {
-        background: #fff3cd;
-        border-left: 4px solid #ffc107;
-    }
-    
-    .calendar-day.has-interview:hover {
-        background: #ffeaa7;
-    }
-    
-    .day-number {
-        font-weight: 600;
-        margin-bottom: 0.25rem;
-    }
-    
-    .interview-event {
-        background: #007bff;
-        color: white;
-        padding: 0.125rem 0.25rem;
-        border-radius: 3px;
-        font-size: 0.75rem;
-        margin-bottom: 0.125rem;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    
-    .interview-event.mock {
-        background: #28a745;
-    }
-    
-    .interview-event.ai {
-        background: #6f42c1;
-    }
-    
-    .interview-event.practice {
-        background: #fd7e14;
-    }
-    
-    .weekday-header {
-        background: #495057;
-        color: white;
-        padding: 0.75rem;
-        text-align: center;
-        font-weight: 600;
-        font-size: 0.875rem;
-    }
-    
-    .add-interview-btn {
-        position: fixed;
-        bottom: 2rem;
-        right: 2rem;
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        background: #007bff;
-        color: white;
-        border: none;
-        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
-        font-size: 1.5rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        z-index: 1000;
-    }
-    
-    .add-interview-btn:hover {
-        background: #0056b3;
-        transform: scale(1.1);
-    }
-    
-    .stats-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-    }
-    
-    .stats-number {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-    }
-    
-    .legend {
-        display: flex;
-        gap: 1rem;
-        flex-wrap: wrap;
-        margin-top: 1rem;
-    }
-    
-    .legend-item {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-size: 0.875rem;
-    }
-    
-    .legend-color {
-        width: 16px;
-        height: 16px;
-        border-radius: 3px;
-    }
+  :root{
+    --pri:#0d6efd; --pri-d:#0b5ed7;
+    --ok:#28a745; --ai:#6f42c1; --prac:#fd7e14; --oth:#0dcaf0;
+    --bg:#f6f7fb; --ink:#2b2f33; --mut:#6b7280; --line:#e5e7eb;
+  }
+  body{background:var(--bg);}
+  .calendar-shell{background:#fff;border-radius:14px;box-shadow:0 6px 20px rgba(0,0,0,.06);overflow:hidden}
+  .cal-top{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#ffffff,#fafafa)}
+  .cal-title{display:flex;align-items:center;gap:10px}
+  .cal-title h3{margin:0;font-weight:700;color:var(--ink)}
+  .cal-nav{display:flex;gap:8px}
+  .cal-nav .btn{min-width:40px}
+
+  .toolbar{display:flex;gap:8px}
+  .chip{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px 8px;font-size:.8rem;color:var(--mut)}
+  .chip .dot{width:10px;height:10px;border-radius:50%}
+  .chip .dot.mock{background:var(--ok)}
+  .chip .dot.ai{background:var(--ai)}
+  .chip .dot.practice{background:var(--prac)}
+  .chip .dot.other{background:var(--oth)}
+
+  .stats-strip{display:flex;gap:12px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--line);background:#fff}
+  .stat{background:#fafafa;border:1px solid var(--line);border-radius:10px;padding:8px 12px;min-width:120px}
+  .stat .n{font-weight:700;font-size:1.1rem}
+
+  .grid{display:grid;grid-template-columns:repeat(7,1fr);background:var(--line)}
+  .weekday{background:#343a40;color:#fff;text-align:center;padding:10px;font-weight:600;font-size:.9rem}
+  .cell{background:#fff;min-height:120px;padding:8px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);position:relative;cursor:pointer}
+  .cell:hover{background:#f8fafc}
+  .cell.muted{background:#fafafa;color:#9aa0a6}
+  .cell.today{outline:2px solid var(--pri);background:#eef5ff}
+  .cell.has{border-left:4px solid #ffc107}
+  .day{font-weight:700;color:#111827}
+
+  .event{margin-top:6px;font-size:.76rem;border-radius:5px;color:#fff;padding:2px 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .event.mock{background:var(--ok)}
+  .event.ai{background:var(--ai)}
+  .event.practice{background:var(--prac)}
+  .event.other{background:var(--oth)}
+
+  /* Drawer */
+  .drawer{position:fixed;right:-420px;top:0;height:100%;width:420px;background:#fff;box-shadow:-8px 0 24px rgba(0,0,0,.12);transition:right .28s ease;z-index:1040;display:flex;flex-direction:column}
+  .drawer.show{right:0}
+  .drawer .head{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+  .drawer .body{padding:16px;overflow:auto}
+  .drawer .foot{padding:12px 16px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end}
+
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container py-4">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h1 class="h2 mb-1">
-                        <i class="fas fa-calendar-alt me-2 text-primary"></i>Interview Calendar
-                    </h1>
-                    <p class="text-muted mb-0">Track your interview preparation schedule</p>
-                </div>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-outline-primary" onclick="exportCalendar()">
-                        <i class="fas fa-download me-2"></i>Export
-                    </button>
-                    <button class="btn btn-primary" onclick="showAddInterviewModal()">
-                        <i class="fas fa-plus me-2"></i>Add Interview
-                    </button>
-                </div>
-            </div>
-        </div>
+  <div class="calendar-shell">
+    <div class="cal-top">
+      <div class="cal-title">
+        <i class="fas fa-calendar-alt text-primary"></i>
+        <h3 id="calLabel">September 2025</h3>
+      </div>
+      <div class="cal-nav">
+        <button class="btn btn-outline-secondary" id="prevBtn"><i class="fas fa-chevron-left"></i></button>
+        <button class="btn btn-outline-primary" id="todayBtn"><i class="fas fa-home me-1"></i>Today</button>
+        <button class="btn btn-outline-secondary" id="nextBtn"><i class="fas fa-chevron-right"></i></button>
+      </div>
+      <div class="toolbar">
+        <button class="btn btn-outline-primary" id="exportBtn"><i class="fas fa-download me-1"></i>Export</button>
+        <button class="btn btn-primary" id="addBtn"><i class="fas fa-plus me-1"></i>Add</button>
+      </div>
     </div>
 
-    <!-- Statistics Cards -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="stats-card text-center">
-                <div class="stats-number" id="total-interviews">0</div>
-                <div>Total Interviews</div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="stats-card text-center">
-                <div class="stats-number" id="this-month">0</div>
-                <div>This Month</div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="stats-card text-center">
-                <div class="stats-number" id="completed">0</div>
-                <div>Completed</div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="stats-card text-center">
-                <div class="stats-number" id="upcoming">0</div>
-                <div>Upcoming</div>
-            </div>
-        </div>
+    <div class="stats-strip">
+      <div class="stat"><div class="n" id="statTotal">0</div><div>Total</div></div>
+      <div class="stat"><div class="n" id="statMonth">0</div><div>This month</div></div>
+      <div class="stat"><div class="n" id="statUpcoming">0</div><div>Upcoming</div></div>
+      <div class="stat"><div class="n" id="statDone">0</div><div>Completed</div></div>
+      <span class="chip"><span class="dot mock"></span>Mock</span>
+      <span class="chip"><span class="dot ai"></span>AI</span>
+      <span class="chip"><span class="dot practice"></span>Practice</span>
+      <span class="chip"><span class="dot other"></span>Other</span>
     </div>
 
-    <!-- Calendar -->
-    <div class="row">
-        <div class="col-12">
-            <div class="calendar-container">
-                <div class="calendar-header">
-                    <h3 id="current-month-year">January 2024</h3>
-                </div>
-                
-                <div class="calendar-nav">
-                    <button class="btn btn-outline-secondary" onclick="previousMonth()">
-                        <i class="fas fa-chevron-left me-2"></i>Previous
-                    </button>
-                    <button class="btn btn-outline-primary" onclick="goToToday()">
-                        <i class="fas fa-home me-2"></i>Today
-                    </button>
-                    <button class="btn btn-outline-secondary" onclick="nextMonth()">
-                        Next<i class="fas fa-chevron-right ms-2"></i>
-                    </button>
-                </div>
-                
-                <div class="calendar-grid">
-                    <!-- Weekday headers -->
-                    <div class="weekday-header">Sun</div>
-                    <div class="weekday-header">Mon</div>
-                    <div class="weekday-header">Tue</div>
-                    <div class="weekday-header">Wed</div>
-                    <div class="weekday-header">Thu</div>
-                    <div class="weekday-header">Fri</div>
-                    <div class="weekday-header">Sat</div>
-                    
-                    <!-- Calendar days will be populated by JavaScript -->
-                    <div id="calendar-days"></div>
-                </div>
-            </div>
-        </div>
+    <div class="grid" id="grid">
+      <div class="weekday">Sun</div><div class="weekday">Mon</div><div class="weekday">Tue</div>
+      <div class="weekday">Wed</div><div class="weekday">Thu</div><div class="weekday">Fri</div><div class="weekday">Sat</div>
+      <div id="cells"></div>
     </div>
-
-    <!-- Legend -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <h6 class="card-title">Legend</h6>
-                    <div class="legend">
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #28a745;"></div>
-                            <span>Mock Interview</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #6f42c1;"></div>
-                            <span>AI Interview</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #fd7e14;"></div>
-                            <span>Practice Session</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #007bff;"></div>
-                            <span>Other Interview</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+  </div>
 </div>
 
-<!-- Add Interview Modal -->
-<div class="modal fade" id="addInterviewModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Add Interview</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="addInterviewForm">
-                    <div class="mb-3">
-                        <label for="interviewTitle" class="form-label">Title</label>
-                        <input type="text" class="form-control" id="interviewTitle" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="interviewType" class="form-label">Type</label>
-                        <select class="form-select" id="interviewType" required>
-                            <option value="mock">Mock Interview</option>
-                            <option value="ai">AI Interview</option>
-                            <option value="practice">Practice Session</option>
-                            <option value="other">Other</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="interviewDate" class="form-label">Date</label>
-                        <input type="date" class="form-control" id="interviewDate" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="interviewTime" class="form-label">Time</label>
-                        <input type="time" class="form-control" id="interviewTime" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="interviewDuration" class="form-label">Duration (minutes)</label>
-                        <input type="number" class="form-control" id="interviewDuration" value="30" min="15" max="180">
-                    </div>
-                    <div class="mb-3">
-                        <label for="interviewNotes" class="form-label">Notes (optional)</label>
-                        <textarea class="form-control" id="interviewNotes" rows="3"></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="saveInterview()">Save Interview</button>
-            </div>
+<!-- Right drawer for Add/Edit -->
+<div class="drawer" id="drawer">
+  <div class="head">
+    <strong id="drawerTitle">Add interview</strong>
+    <button class="btn btn-sm btn-outline-secondary" id="closeDrawer"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="body">
+    <form id="form">
+      <div class="mb-3">
+        <label class="form-label">Title</label>
+        <input class="form-control" id="fTitle" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Type</label>
+        <select class="form-select" id="fType" required>
+          <option value="mock">Mock</option>
+          <option value="ai">AI</option>
+          <option value="practice">Practice</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="row g-2">
+        <div class="col-6">
+          <label class="form-label">Date</label>
+          <input type="date" class="form-control" id="fDate" required>
         </div>
-    </div>
+        <div class="col-6">
+          <label class="form-label">Time</label>
+          <input type="time" class="form-control" id="fTime" required>
+        </div>
+      </div>
+      <div class="mb-3 mt-2">
+        <label class="form-label">Duration (min)</label>
+        <input type="number" class="form-control" id="fDur" value="30" min="15" max="180">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Notes</label>
+        <textarea class="form-control" id="fNotes" rows="3"></textarea>
+      </div>
+      <input type="hidden" id="fId">
+    </form>
+  </div>
+  <div class="foot">
+    <button class="btn btn-outline-danger d-none" id="delBtn"><i class="fas fa-trash me-1"></i>Delete</button>
+    <button class="btn btn-secondary" id="cancelBtn">Cancel</button>
+    <button class="btn btn-primary" id="saveBtn">Save</button>
+  </div>
 </div>
 
-<!-- Floating Add Button -->
-<button class="add-interview-btn" onclick="showAddInterviewModal()" title="Add Interview">
-    <i class="fas fa-plus"></i>
-</button>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-let currentDate = new Date();
-let interviews = [];
+const CalendarUI = (() => {
+  let state = {
+    today: new Date(),
+    cursor: new Date(),
+    items: []
+  };
 
-// Initialize calendar
-document.addEventListener('DOMContentLoaded', function() {
-    loadInterviews();
-    renderCalendar();
+  // DOM refs
+  const el = {
+    label: () => document.getElementById('calLabel'),
+    cells: () => document.getElementById('cells'),
+    drawer: () => document.getElementById('drawer'),
+    form: () => document.getElementById('form'),
+    id: () => document.getElementById('fId'),
+    title: () => document.getElementById('fTitle'),
+    type: () => document.getElementById('fType'),
+    date: () => document.getElementById('fDate'),
+    time: () => document.getElementById('fTime'),
+    dur: () => document.getElementById('fDur'),
+    notes: () => document.getElementById('fNotes'),
+    delBtn: () => document.getElementById('delBtn'),
+    statTotal: () => document.getElementById('statTotal'),
+    statMonth: () => document.getElementById('statMonth'),
+    statUpcoming: () => document.getElementById('statUpcoming'),
+    statDone: () => document.getElementById('statDone'),
+  };
+
+  // Storage
+  const load = () => {
+    const raw = localStorage.getItem('interviewCalendar');
+    if (raw) state.items = JSON.parse(raw);
+    if (!raw) {
+      state.items = [
+        {id:1,title:'Mock DS&A',type:'mock',date:'2025-09-15',time:'14:00',duration:45,notes:'Arrays, DP'},
+        {id:2,title:'AI System Design',type:'ai',date:'2025-09-18',time:'11:00',duration:40,notes:'Caching, queues'}
+      ];
+      save();
+    }
+  };
+  const save = () => localStorage.setItem('interviewCalendar', JSON.stringify(state.items));
+
+  // Helpers
+  const ym = (d) => [d.getFullYear(), d.getMonth()];
+  const fmtDate = (y,m,day) => `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+
+  // Render calendar grid
+  const render = () => {
+    const y = state.cursor.getFullYear();
+    const m = state.cursor.getMonth();
+    const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    el.label().textContent = `${monthNames[m]} ${y}`;
+
+    const first = new Date(y,m,1);
+    const last = new Date(y,m+1,0);
+    const startOffset = first.getDay();
+    const totalDays = last.getDate();
+
+    const host = el.cells();
+    host.innerHTML = '';
+
+    // leading muted
+    for (let i=0;i<startOffset;i++) host.appendChild(cell(0,true));
+
+    for (let day=1; day<=totalDays; day++){
+      const dateStr = fmtDate(y,m,day);
+      const events = state.items.filter(it => it.date === dateStr);
+      host.appendChild(cell(day,false,events));
+    }
+
+    // fill to 6 rows
+    const need = 42 - host.children.length;
+    for (let i=0;i<need;i++) host.appendChild(cell(0,true));
+
     updateStats();
-});
+  };
 
-function loadInterviews() {
-    // Load interviews from localStorage (in a real app, this would be from the server)
-    const saved = localStorage.getItem('interviewCalendar');
-    if (saved) {
-        interviews = JSON.parse(saved);
-    } else {
-        // Sample data for demonstration
-        interviews = [
-            {
-                id: 1,
-                title: "Mock Interview - Technical",
-                type: "mock",
-                date: "2024-01-15",
-                time: "14:00",
-                duration: 30,
-                notes: "Focus on algorithms and data structures"
-            },
-            {
-                id: 2,
-                title: "AI Interview - System Design",
-                type: "ai",
-                date: "2024-01-18",
-                time: "10:00",
-                duration: 45,
-                notes: "Practice system design questions"
-            },
-            {
-                id: 3,
-                title: "Practice Session - JavaScript",
-                type: "practice",
-                date: "2024-01-20",
-                time: "16:00",
-                duration: 60,
-                notes: "Review JavaScript fundamentals"
-            }
-        ];
-        saveInterviews();
+  // Build a day cell
+  const cell = (day, muted=false, events=[]) => {
+    const d = document.createElement('div');
+    d.className = 'cell' + (muted?' muted':'') + (events.length?' has':'');
+    if (!muted) {
+      const y = state.cursor.getFullYear(), m = state.cursor.getMonth();
+      const dateStr = fmtDate(y,m,day);
+      const header = document.createElement('div');
+      header.className = 'day';
+      header.textContent = day;
+      d.appendChild(header);
+
+      const now = new Date();
+      if (y===now.getFullYear() && m===now.getMonth() && day===now.getDate()) d.classList.add('today');
+
+      events.forEach(ev => {
+        const e = document.createElement('div');
+        e.className = `event ${ev.type}`;
+        e.textContent = `${ev.time} • ${ev.title}`;
+        e.title = `${ev.title} at ${ev.time}`;
+        e.addEventListener('click', (e2) => { e2.stopPropagation(); openDrawer(ev); });
+        d.appendChild(e);
+      });
+
+      d.addEventListener('click', () => openDrawer({ date: dateStr, time: '10:00', duration: 30, type: 'other' }));
     }
-}
+    return d;
+  };
 
-function saveInterviews() {
-    localStorage.setItem('interviewCalendar', JSON.stringify(interviews));
-}
-
-function renderCalendar() {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-    
-    // Update header
-    const monthNames = ["January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"];
-    document.getElementById('current-month-year').textContent = 
-        `${monthNames[month]} ${year}`;
-    
-    // Get first day of month and number of days
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    const startingDayOfWeek = firstDay.getDay();
-    
-    // Clear calendar
-    const calendarDays = document.getElementById('calendar-days');
-    calendarDays.innerHTML = '';
-    
-    // Add empty cells for days before the first day of the month
-    for (let i = 0; i < startingDayOfWeek; i++) {
-        const dayElement = createDayElement(0, true);
-        calendarDays.appendChild(dayElement);
-    }
-    
-    // Add days of the month
-    for (let day = 1; day <= daysInMonth; day++) {
-        const dayElement = createDayElement(day, false);
-        calendarDays.appendChild(dayElement);
-    }
-    
-    // Fill remaining cells to complete the grid
-    const totalCells = calendarDays.children.length;
-    const remainingCells = 42 - totalCells; // 6 rows × 7 days
-    for (let i = 0; i < remainingCells; i++) {
-        const dayElement = createDayElement(0, true);
-        calendarDays.appendChild(dayElement);
-    }
-}
-
-function createDayElement(day, isOtherMonth) {
-    const dayElement = document.createElement('div');
-    dayElement.className = 'calendar-day';
-    
-    if (isOtherMonth) {
-        dayElement.classList.add('other-month');
-    } else {
-        dayElement.innerHTML = `<div class="day-number">${day}</div>`;
-        
-        // Check if this day has interviews
-        const dateStr = formatDate(currentDate.getFullYear(), currentDate.getMonth(), day);
-        const dayInterviews = interviews.filter(interview => interview.date === dateStr);
-        
-        if (dayInterviews.length > 0) {
-            dayElement.classList.add('has-interview');
-            dayInterviews.forEach(interview => {
-                const eventElement = document.createElement('div');
-                eventElement.className = `interview-event ${interview.type}`;
-                eventElement.textContent = interview.title;
-                eventElement.title = `${interview.title} at ${interview.time}`;
-                dayElement.appendChild(eventElement);
-            });
-        }
-        
-        // Check if this is today
-        const today = new Date();
-        if (currentDate.getFullYear() === today.getFullYear() &&
-            currentDate.getMonth() === today.getMonth() &&
-            day === today.getDate()) {
-            dayElement.classList.add('today');
-        }
-        
-        // Add click handler
-        dayElement.addEventListener('click', () => {
-            showDayDetails(dateStr, dayInterviews);
-        });
-    }
-    
-    return dayElement;
-}
-
-function formatDate(year, month, day) {
-    return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-}
-
-function previousMonth() {
-    currentDate.setMonth(currentDate.getMonth() - 1);
-    renderCalendar();
-}
-
-function nextMonth() {
-    currentDate.setMonth(currentDate.getMonth() + 1);
-    renderCalendar();
-}
-
-function goToToday() {
-    currentDate = new Date();
-    renderCalendar();
-}
-
-function showAddInterviewModal() {
-    // Set default date to today
-    const today = new Date();
-    document.getElementById('interviewDate').value = today.toISOString().split('T')[0];
-    
-    const modal = new bootstrap.Modal(document.getElementById('addInterviewModal'));
-    modal.show();
-}
-
-function saveInterview() {
-    const title = document.getElementById('interviewTitle').value;
-    const type = document.getElementById('interviewType').value;
-    const date = document.getElementById('interviewDate').value;
-    const time = document.getElementById('interviewTime').value;
-    const duration = document.getElementById('interviewDuration').value;
-    const notes = document.getElementById('interviewNotes').value;
-    
-    if (!title || !date || !time) {
-        alert('Please fill in all required fields');
-        return;
-    }
-    
-    const newInterview = {
-        id: Date.now(),
-        title,
-        type,
-        date,
-        time,
-        duration: parseInt(duration),
-        notes
-    };
-    
-    interviews.push(newInterview);
-    saveInterviews();
-    renderCalendar();
-    updateStats();
-    
-    // Close modal
-    const modal = bootstrap.Modal.getInstance(document.getElementById('addInterviewModal'));
-    modal.hide();
-    
-    // Reset form
-    document.getElementById('addInterviewForm').reset();
-    
-    showMessage('Interview added successfully!', 'success');
-}
-
-function showDayDetails(date, dayInterviews) {
-    if (dayInterviews.length === 0) {
-        showMessage('No interviews scheduled for this day', 'info');
-        return;
-    }
-    
-    let message = `Interviews for ${new Date(date).toLocaleDateString()}:\n\n`;
-    dayInterviews.forEach(interview => {
-        message += `• ${interview.title} at ${interview.time} (${interview.duration} min)\n`;
-        if (interview.notes) {
-            message += `  Notes: ${interview.notes}\n`;
-        }
-        message += '\n';
-    });
-    
-    alert(message);
-}
-
-function updateStats() {
-    const total = interviews.length;
-    const thisMonth = interviews.filter(interview => {
-        const interviewDate = new Date(interview.date);
-        return interviewDate.getMonth() === currentDate.getMonth() &&
-               interviewDate.getFullYear() === currentDate.getFullYear();
+  // Stats
+  const updateStats = () => {
+    const [y,m] = ym(state.cursor);
+    const monthCnt = state.items.filter(it => {
+      const d = new Date(it.date);
+      return d.getFullYear()===y && d.getMonth()===m;
     }).length;
-    
-    const today = new Date().toISOString().split('T')[0];
-    const completed = interviews.filter(interview => interview.date < today).length;
-    const upcoming = interviews.filter(interview => interview.date >= today).length;
-    
-    document.getElementById('total-interviews').textContent = total;
-    document.getElementById('this-month').textContent = thisMonth;
-    document.getElementById('completed').textContent = completed;
-    document.getElementById('upcoming').textContent = upcoming;
-}
 
-function exportCalendar() {
-    const dataStr = JSON.stringify(interviews, null, 2);
-    const dataBlob = new Blob([dataStr], {type: 'application/json'});
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'interview-calendar.json';
-    link.click();
+    const todayStr = new Date().toISOString().split('T')[0];
+    const done = state.items.filter(it => it.date < todayStr).length;
+    const upcoming = state.items.filter(it => it.date >= todayStr).length;
+
+    el.statTotal().textContent = state.items.length;
+    el.statMonth().textContent = monthCnt;
+    el.statUpcoming().textContent = upcoming;
+    el.statDone().textContent = done;
+  };
+
+  // Drawer logic
+  const openDrawer = (obj) => {
+    // If obj has id => edit, else create
+    el.form().reset();
+    el.id().value = obj.id || '';
+    el.title().value = obj.title || '';
+    el.type().value = obj.type || 'other';
+    el.date().value = obj.date || new Date().toISOString().split('T')[0];
+    el.time().value = obj.time || '10:00';
+    el.dur().value = obj.duration || 30;
+    el.notes().value = obj.notes || '';
+    el.delBtn().classList.toggle('d-none', !obj.id);
+
+    document.getElementById('drawerTitle').textContent = obj.id ? 'Edit interview' : 'Add interview';
+    el.drawer().classList.add('show');
+  };
+  const closeDrawer = () => el.drawer().classList.remove('show');
+
+  const saveItem = () => {
+    if (!el.form().checkValidity()) { el.form().reportValidity(); return; }
+    const item = {
+      id: el.id().value ? Number(el.id().value) : Date.now(),
+      title: el.title().value.trim(),
+      type: el.type().value,
+      date: el.date().value,
+      time: el.time().value,
+      duration: Number(el.dur().value || 30),
+      notes: el.notes().value.trim()
+    };
+    const idx = state.items.findIndex(i => i.id === item.id);
+    if (idx >= 0) state.items[idx] = item; else state.items.push(item);
+    save(); render(); closeDrawer();
+  };
+
+  const delItem = () => {
+    const id = Number(el.id().value);
+    state.items = state.items.filter(i => i.id !== id);
+    save(); render(); closeDrawer();
+  };
+
+  // Public init and bindings
+  const bind = () => {
+    document.getElementById('prevBtn').addEventListener('click', () => { state.cursor.setMonth(state.cursor.getMonth()-1); render(); });
+    document.getElementById('nextBtn').addEventListener('click', () => { state.cursor.setMonth(state.cursor.getMonth()+1); render(); });
+    document.getElementById('todayBtn').addEventListener('click', () => { state.cursor = new Date(); render(); });
+    document.getElementById('addBtn').addEventListener('click', () => openDrawer({}));
+    document.getElementById('exportBtn').addEventListener('click', exportData);
+    document.getElementById('closeDrawer').addEventListener('click', closeDrawer);
+    document.getElementById('cancelBtn').addEventListener('click', closeDrawer);
+    document.getElementById('saveBtn').addEventListener('click', saveItem);
+    el.delBtn().addEventListener('click', delItem);
+  };
+
+  const exportData = () => {
+    const blob = new Blob([JSON.stringify(state.items,null,2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'interview-calendar.json'; a.click();
     URL.revokeObjectURL(url);
-}
+  };
 
-function showMessage(message, type = 'info') {
-    const alertClass = type === 'error' ? 'alert-danger' : 
-                      type === 'warning' ? 'alert-warning' : 
-                      type === 'success' ? 'alert-success' : 'alert-info';
-    
-    const alertHtml = `
-        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    `;
-    
-    const container = document.querySelector('.container');
-    container.insertAdjacentHTML('afterbegin', alertHtml);
-    
-    setTimeout(() => {
-        const alert = container.querySelector('.alert');
-        if (alert) {
-            alert.remove();
-        }
-    }, 5000);
-}
+  const init = () => { load(); bind(); render(); };
+
+  return { init };
+})();
+
+document.addEventListener('DOMContentLoaded', CalendarUI.init);
 </script>
+
 {% endblock %}
 

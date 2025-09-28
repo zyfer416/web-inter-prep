@@ -210,149 +210,163 @@ def ai_interview_start():
 @app.route("/api/ai-interview/answer", methods=["POST"])
 def ai_interview_answer():
     """Grade the answer and return feedback + next question."""
-    if "user_id" not in session or "mock_session_id" not in session:
-        return jsonify({"ok": False, "error": "No active interview"}), 400
-
-    body = request.get_json(force=True, silent=True) or {}
-    question_text = (body.get("question") or "").strip()
-    user_answer = (body.get("answer") or "").strip()
-    if not question_text or not user_answer:
-        return jsonify({"ok": False, "error": "Missing question or answer"}), 400
-
-    # Evaluator rubric prompt - 10 point scale
-    rubric = (
-        "Evaluate the candidate's answer on a 10-point scale. "
-        "Score 10: Excellent answer with all key points covered, clear explanation, good examples. "
-        "Score 8-9: Good answer with most key points, clear structure. "
-        "Score 6-7: Adequate answer with some key points, basic understanding. "
-        "Score 4-5: Poor answer with few key points, unclear explanation. "
-        "Score 0-3: Very poor answer with major gaps or incorrect information. "
-        "Also provide: correctness (0-3), clarity (0-3), depth (0-2), conciseness (0-2). "
-        "verdict in [Pass, Borderline, Improve]. "
-        "Provide strengths (3 items), improvements (3 items), ideal_answer (5-8 lines). "
-        "Return strict JSON with keys: correctness, clarity, depth, conciseness, score_10, verdict, strengths, improvements, ideal_answer."
-    )
-    eval_prompt = f"Question:\n{question_text}\n\nCandidate_Answer:\n{user_answer}\n\n{rubric}"
-    eval_json_text = _gemini_call([{"text": eval_prompt}], expect_json=True, temperature=0.2)
-
     try:
-        evaluation = json.loads(eval_json_text) if eval_json_text else {}
-    except Exception:
-        evaluation = {}
+        # Session guard
+        if "user_id" not in session or "mock_session_id" not in session:
+            return jsonify({"ok": False, "error": "No active interview"}), 400
 
-    # Reasonable fallback if model didn't return JSON or no API key
-    if not isinstance(evaluation, dict) or "score_10" not in evaluation:
-        # Simple scoring based on answer length and content
-        answer_length = len(user_answer.strip())
-        if answer_length < 20:
-            score = 3
-            verdict = "Improve"
-        elif answer_length < 50:
-            score = 5
-            verdict = "Borderline"
-        elif answer_length < 100:
-            score = 7
-            verdict = "Pass"
-        else:
-            score = 8
-            verdict = "Pass"
-        
-        evaluation = {
-            "correctness": min(3, score // 3), 
-            "clarity": min(3, score // 3), 
-            "depth": min(2, score // 4), 
-            "conciseness": min(2, score // 4),
-            "score_10": score, 
-            "verdict": verdict,
-            "strengths": ["Provided an answer", "Showed understanding"], 
-            "improvements": ["Add more detail", "Provide examples"], 
-            "ideal_answer": "A comprehensive answer with clear structure, examples, and technical details."
+        # Input
+        body = request.get_json(silent=True) or {}
+        question_text = (body.get("question") or "").strip()
+        user_answer = (body.get("answer") or "").strip()
+        if not question_text or not user_answer:
+            return jsonify({"ok": False, "error": "Missing question or answer"}), 400
+
+        # Rubric
+        rubric = (
+            "Evaluate the candidate's answer on a 10-point scale. "
+            "Score 10: Excellent answer with all key points covered, clear explanation, good examples. "
+            "Score 8-9: Good answer with most key points, clear structure. "
+            "Score 6-7: Adequate answer with some key points, basic understanding. "
+            "Score 4-5: Poor answer with few key points, unclear explanation. "
+            "Score 0-3: Very poor answer with major gaps or incorrect information. "
+            "Also provide: correctness (0-3), clarity (0-3), depth (0-2), conciseness (0-2). "
+            "verdict in [Pass, Borderline, Improve]. "
+            "Provide strengths (3 items), improvements (3 items), ideal_answer (5-8 lines). "
+            "Return strict JSON with keys: correctness, clarity, depth, conciseness, score_10, verdict, strengths, improvements, ideal_answer."
+        )
+
+        # Build prompt and call LLM
+        eval_prompt = f"Question:\n{question_text}\n\nCandidate_Answer:\n{user_answer}\n\n{rubric}"
+        app.logger.info(f"Gemini Eval Prompt: {eval_prompt}")
+        eval_json_text = _gemini_call([{"text": eval_prompt}], expect_json=True, temperature=0.2)
+        app.logger.info(f"Gemini Eval Raw Response: {eval_json_text}")
+
+        # Parse with fallback
+        try:
+            evaluation = json.loads(eval_json_text) if eval_json_text else {}
+        except Exception as e:
+            app.logger.warning(f"Eval JSON parse error: {e}")
+            evaluation = {}
+
+        if not isinstance(evaluation, dict) or "score_10" not in evaluation:
+            # Heuristic fallback scoring
+            answer_length = len(user_answer)
+            if answer_length < 20:
+                score, verdict = 3, "Improve"
+            elif answer_length < 50:
+                score, verdict = 5, "Borderline"
+            elif answer_length < 100:
+                score, verdict = 7, "Pass"
+            else:
+                score, verdict = 8, "Pass"
+            evaluation = {
+                "correctness": min(3, score // 3),
+                "clarity": min(3, score // 3),
+                "depth": min(2, score // 4),
+                "conciseness": min(2, score // 4),
+                "score_10": score,
+                "verdict": verdict,
+                "strengths": ["Provided an answer", "Showed understanding"],
+                "improvements": ["Add more detail", "Provide examples"],
+                "ideal_answer": "A comprehensive answer with clear structure, examples, and technical details."
+            }
+
+        # Persist attempt
+        conn = None
+        try:
+            db_path = get_db_path()
+            conn = sqlite3.connect(db_path)
+            cur = conn.cursor()
+            cur.execute(
+                '''
+                INSERT INTO attempts (user_id, question_id, correct, user_answer, mock_session_id)
+                VALUES (?, ?, ?, ?, ?)
+                ''',
+                (
+                    session["user_id"],
+                    0,  # replace with real question_id if available
+                    1 if int(evaluation.get("score_10", 0)) >= 7 else 0,
+                    json.dumps({"q": question_text, "a": user_answer, "feedback": evaluation}),
+                    session["mock_session_id"]
+                )
+            )
+            conn.commit()
+        except Exception as e:
+            app.logger.exception(f"DB insert failed: {e}")
+            # Do not fail the API; continue returning evaluation
+        finally:
+            if conn:
+                conn.close()
+
+        # Round control
+        current_round = int(session.get("ai_round", 1))
+        question_count = int(session.get("ai_question_count", 5))
+        if current_round >= question_count:
+            return jsonify({
+                "ok": True,
+                "evaluation": evaluation,
+                "interview_complete": True,
+                "final_score": evaluation.get("score_10", 0),
+                "total_questions": current_round
+            }), 200
+
+        # Next question
+        session["ai_round"] = current_round + 1
+        topic = session.get("ai_topic", "technical")
+        topic_prompts = {
+            "technical": "Ask a technical programming question",
+            "behavioral": "Ask a behavioral/situational question",
+            "system-design": "Ask a system design question",
+            "mixed": "Ask either a technical or behavioral question"
         }
+        topic_instruction = topic_prompts.get(topic, "Ask a technical question")
+        next_prompt = (
+            f"Based on the previous question and the candidate's answer quality, ask the next interview question. "
+            f"{topic_instruction}. Increase difficulty gradually. Return strict JSON: {{\"question\":\"...\",\"topic\":\"...\"}}. "
+            f"Previous question: {question_text}"
+        )
+        next_json_text = _gemini_call([{"text": next_prompt}], expect_json=True)
+        try:
+            nxt = json.loads(next_json_text) if next_json_text else {}
+        except Exception as e:
+            app.logger.warning(f"Next question JSON parse error: {e}")
+            nxt = {}
 
-    # Save attempt with feedback JSON stuffed in user_answer
-    try:
-        db_path = get_db_path()
-        conn = sqlite3.connect(db_path)
-        cur = conn.cursor()
-        cur.execute('''
-            INSERT INTO attempts (user_id, question_id, correct, user_answer, mock_session_id)
-            VALUES (?, ?, ?, ?, ?)
-        ''', (session["user_id"], 0, 1 if int(evaluation.get("score_10", 0)) >= 7 else 0,
-              json.dumps({"q": question_text, "a": user_answer, "feedback": evaluation}),
-              session["mock_session_id"]))
-        conn.commit()
-    finally:
-        conn.close()
+        if not nxt.get("question"):
+            # Fallback bank
+            fallback_questions = {
+                "technical": [
+                    {"question": "Explain the concept of database indexing and how it improves query performance.", "topic": "Technical"},
+                    {"question": "What is the difference between synchronous and asynchronous programming?", "topic": "Technical"},
+                    {"question": "How would you implement a hash table from scratch?", "topic": "Technical"}
+                ],
+                "behavioral": [
+                    {"question": "Tell me about a time when you had to debug a complex issue.", "topic": "Behavioral"},
+                    {"question": "Describe a situation where you had to work under pressure.", "topic": "Behavioral"},
+                    {"question": "How do you stay updated with the latest technology trends?", "topic": "Behavioral"}
+                ],
+                "system-design": [
+                    {"question": "How would you design a social media feed system?", "topic": "System Design"},
+                    {"question": "Design a load balancer that can handle traffic spikes.", "topic": "System Design"},
+                    {"question": "How would you design a real-time analytics system?", "topic": "System Design"}
+                ]
+            }
+            import random
+            nxt = random.choice(fallback_questions.get(topic, fallback_questions["technical"]))
 
-    # Check if we should continue with more questions
-    current_round = int(session.get("ai_round", 1))
-    question_count = int(session.get("ai_question_count", 5))
-    
-    if current_round >= question_count:
-        # Interview complete
         return jsonify({
             "ok": True,
             "evaluation": evaluation,
-            "interview_complete": True,
-            "final_score": evaluation.get("score_10", 0),
-            "total_questions": current_round
-        })
-    
-    # Next question
-    session["ai_round"] = current_round + 1
-    topic = session.get("ai_topic", "technical")
-    
-    # Generate topic-specific next question
-    topic_prompts = {
-        "technical": "Ask a technical programming question",
-        "behavioral": "Ask a behavioral/situational question", 
-        "system-design": "Ask a system design question",
-        "mixed": "Ask either a technical or behavioral question"
-    }
-    
-    topic_instruction = topic_prompts.get(topic, "Ask a technical question")
-    
-    next_prompt = (
-        f"Based on the previous question and the candidate's answer quality, ask the next interview question. "
-        f"{topic_instruction}. Increase difficulty gradually. Return strict JSON: {{\"question\":\"...\",\"topic\":\"...\"}}. "
-        f"Previous question: {question_text}"
-    )
-    next_json_text = _gemini_call([{"text": next_prompt}], expect_json=True)
-    try:
-        nxt = json.loads(next_json_text) if next_json_text else {}
-    except Exception:
-        nxt = {}
-    
-    # Fallback next question if Gemini fails
-    if not nxt.get("question"):
-        fallback_questions = {
-            "technical": [
-                {"question": "Explain the concept of database indexing and how it improves query performance.", "topic": "Technical"},
-                {"question": "What is the difference between synchronous and asynchronous programming?", "topic": "Technical"},
-                {"question": "How would you implement a hash table from scratch?", "topic": "Technical"}
-            ],
-            "behavioral": [
-                {"question": "Tell me about a time when you had to debug a complex issue.", "topic": "Behavioral"},
-                {"question": "Describe a situation where you had to work under pressure.", "topic": "Behavioral"},
-                {"question": "How do you stay updated with the latest technology trends?", "topic": "Behavioral"}
-            ],
-            "system-design": [
-                {"question": "How would you design a social media feed system?", "topic": "System Design"},
-                {"question": "Design a load balancer that can handle traffic spikes.", "topic": "System Design"},
-                {"question": "How would you design a real-time analytics system?", "topic": "System Design"}
-            ]
-        }
-        import random
-        topic_questions = fallback_questions.get(topic, fallback_questions["technical"])
-        nxt = random.choice(topic_questions)
+            "next_question": nxt.get("question", ""),
+            "next_topic": nxt.get("topic", "General"),
+            "round": session["ai_round"]
+        }), 200
 
-    return jsonify({
-        "ok": True,
-        "evaluation": evaluation,
-        "next_question": nxt.get("question", ""),
-        "next_topic": nxt.get("topic", "General"),
-        "round": session["ai_round"]
-    })
+    except Exception as e:
+        app.logger.exception(f"/api/ai-interview/answer crashed: {e}")
+        return jsonify({"ok": False, "error": "Server error during evaluation"}), 500
+
 
 @app.route("/api/gemini/solve", methods=["POST"])
 def gemini_solve():
@@ -1240,10 +1254,12 @@ def calendar():
     return render_template('calendar.html')
 
 
-from backend.services.gemini_client import ask_gemini
+from .services.gemini_client import ask_gemini
+
 
 @app.route("/api/gemini/qa", methods=["POST"])
 def gemini_qa():
+    """Q&A API endpoint using Gemini."""
     data = request.get_json(force=True) or {}
     prompt = data.get("prompt", "").strip()
     if not prompt:
@@ -1429,3 +1445,4 @@ if __name__ == '__main__':
 # For Vercel deployment
 def handler(request):
     return app(request.environ, lambda status, headers: None)
+    
