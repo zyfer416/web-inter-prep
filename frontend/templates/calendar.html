@@ -10,8 +10,8 @@
     --bg:#f6f7fb; --ink:#2b2f33; --mut:#6b7280; --line:#e5e7eb;
   }
   body{background:var(--bg);}
-  .calendar-shell{background:#fff;border-radius:14px;box-shadow:0 6px 20px rgba(0,0,0,.06);overflow:hidden}
-  .cal-top{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#ffffff,#fafafa)}
+  .calendar-shell{background:#fff;border-radius:14px;box-shadow:0 6px 20px rgba(0,0,0,.06);overflow:hidden;max-width:1100px;margin:0 auto}
+  .cal-top{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#ffffff,#fafafa)}
   .cal-title{display:flex;align-items:center;gap:10px}
   .cal-title h3{margin:0;font-weight:700;color:var(--ink)}
   .cal-nav{display:flex;gap:8px}
@@ -25,24 +25,30 @@
   .chip .dot.practice{background:var(--prac)}
   .chip .dot.other{background:var(--oth)}
 
-  .stats-strip{display:flex;gap:12px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--line);background:#fff}
+  .stats-strip{display:flex;gap:12px;flex-wrap:wrap;padding:8px 12px;border-bottom:1px solid var(--line);background:#fff}
   .stat{background:#fafafa;border:1px solid var(--line);border-radius:10px;padding:8px 12px;min-width:120px}
   .stat .n{font-weight:700;font-size:1.1rem}
 
+  /* Height control: no page-level long scroll */
+  .calendar-shell{max-height:calc(100vh - 140px);display:flex;flex-direction:column}
+  .stats-strip{flex:0 0 auto}
+  .grid{flex:1 1 auto;overflow:auto}
+
   .grid{display:grid;grid-template-columns:repeat(7,1fr);background:var(--line)}
-  .weekday{background:#343a40;color:#fff;text-align:center;padding:10px;font-weight:600;font-size:.9rem}
-  .cell{background:#fff;min-height:120px;padding:8px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);position:relative;cursor:pointer}
+  .weekday{background:#343a40;color:#fff;text-align:center;padding:8px;font-weight:600;font-size:.9rem;position:sticky;top:0;z-index:1}
+  .cell{background:#fff;min-height:88px;padding:6px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);position:relative;cursor:pointer}
   .cell:hover{background:#f8fafc}
   .cell.muted{background:#fafafa;color:#9aa0a6}
   .cell.today{outline:2px solid var(--pri);background:#eef5ff}
   .cell.has{border-left:4px solid #ffc107}
   .day{font-weight:700;color:#111827}
 
-  .event{margin-top:6px;font-size:.76rem;border-radius:5px;color:#fff;padding:2px 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .event{margin-top:6px;font-size:.72rem;border-radius:5px;color:#fff;padding:2px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
   .event.mock{background:var(--ok)}
   .event.ai{background:var(--ai)}
   .event.practice{background:var(--prac)}
   .event.other{background:var(--oth)}
+  .more{margin-top:4px;font-size:.72rem;color:#6b7280}
 
   /* Drawer */
   .drawer{position:fixed;right:-420px;top:0;height:100%;width:420px;background:#fff;box-shadow:-8px 0 24px rgba(0,0,0,.12);transition:right .28s ease;z-index:1040;display:flex;flex-direction:column}
@@ -50,7 +56,6 @@
   .drawer .head{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
   .drawer .body{padding:16px;overflow:auto}
   .drawer .foot{padding:12px 16px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end}
-
 </style>
 {% endblock %}
 
@@ -63,9 +68,9 @@
         <h3 id="calLabel">September 2025</h3>
       </div>
       <div class="cal-nav">
-        <button class="btn btn-outline-secondary" id="prevBtn"><i class="fas fa-chevron-left"></i></button>
-        <button class="btn btn-outline-primary" id="todayBtn"><i class="fas fa-home me-1"></i>Today</button>
-        <button class="btn btn-outline-secondary" id="nextBtn"><i class="fas fa-chevron-right"></i></button>
+        <button class="btn btn-outline-secondary" id="prevBtn" title="Previous month"><i class="fas fa-chevron-left"></i></button>
+        <button class="btn btn-outline-primary" id="todayBtn" title="Go to today"><i class="fas fa-home me-1"></i>Today</button>
+        <button class="btn btn-outline-secondary" id="nextBtn" title="Next month"><i class="fas fa-chevron-right"></i></button>
       </div>
       <div class="toolbar">
         <button class="btn btn-outline-primary" id="exportBtn"><i class="fas fa-download me-1"></i>Export</button>
@@ -140,7 +145,6 @@
     <button class="btn btn-primary" id="saveBtn">Save</button>
   </div>
 </div>
-
 {% endblock %}
 
 {% block extra_js %}
@@ -178,16 +182,19 @@ const CalendarUI = (() => {
     if (raw) state.items = JSON.parse(raw);
     if (!raw) {
       state.items = [
-        {id:1,title:'Mock DS&A',type:'mock',date:'2025-09-15',time:'14:00',duration:45,notes:'Arrays, DP'},
-        {id:2,title:'AI System Design',type:'ai',date:'2025-09-18',time:'11:00',duration:40,notes:'Caching, queues'}
+        {id:1,title:'Mock DS&A',type:'mock',date:todayStr(0),time:'14:00',duration:45,notes:'Arrays, DP'},
+        {id:2,title:'AI System Design',type:'ai',date:todayStr(3),time:'11:00',duration:40,notes:'Caching, queues'}
       ];
       save();
     }
   };
   const save = () => localStorage.setItem('interviewCalendar', JSON.stringify(state.items));
+  const todayStr = (offsetDays=0) => {
+    const d = new Date(); d.setDate(d.getDate()+offsetDays);
+    return d.toISOString().split('T')[0];
+  };
 
   // Helpers
-  const ym = (d) => [d.getFullYear(), d.getMonth()];
   const fmtDate = (y,m,day) => `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
 
   // Render calendar grid
@@ -205,7 +212,6 @@ const CalendarUI = (() => {
     const host = el.cells();
     host.innerHTML = '';
 
-    // leading muted
     for (let i=0;i<startOffset;i++) host.appendChild(cell(0,true));
 
     for (let day=1; day<=totalDays; day++){
@@ -214,7 +220,6 @@ const CalendarUI = (() => {
       host.appendChild(cell(day,false,events));
     }
 
-    // fill to 6 rows
     const need = 42 - host.children.length;
     for (let i=0;i<need;i++) host.appendChild(cell(0,true));
 
@@ -236,7 +241,8 @@ const CalendarUI = (() => {
       const now = new Date();
       if (y===now.getFullYear() && m===now.getMonth() && day===now.getDate()) d.classList.add('today');
 
-      events.forEach(ev => {
+      const maxRows = 3;
+      events.slice(0, maxRows).forEach(ev => {
         const e = document.createElement('div');
         e.className = `event ${ev.type}`;
         e.textContent = `${ev.time} • ${ev.title}`;
@@ -244,6 +250,13 @@ const CalendarUI = (() => {
         e.addEventListener('click', (e2) => { e2.stopPropagation(); openDrawer(ev); });
         d.appendChild(e);
       });
+      if (events.length > maxRows) {
+        const more = document.createElement('div');
+        more.className = 'more';
+        more.textContent = `+${events.length - maxRows} more`;
+        more.addEventListener('click', (e2) => { e2.stopPropagation(); openDrawer({ date: dateStr }); });
+        d.appendChild(more);
+      }
 
       d.addEventListener('click', () => openDrawer({ date: dateStr, time: '10:00', duration: 30, type: 'other' }));
     }
@@ -252,15 +265,16 @@ const CalendarUI = (() => {
 
   // Stats
   const updateStats = () => {
-    const [y,m] = ym(state.cursor);
+    const y = state.cursor.getFullYear();
+    const m = state.cursor.getMonth();
     const monthCnt = state.items.filter(it => {
       const d = new Date(it.date);
       return d.getFullYear()===y && d.getMonth()===m;
     }).length;
 
-    const todayStr = new Date().toISOString().split('T')[0];
-    const done = state.items.filter(it => it.date < todayStr).length;
-    const upcoming = state.items.filter(it => it.date >= todayStr).length;
+    const today = new Date().toISOString().split('T')[0];
+    const done = state.items.filter(it => it.date < today).length;
+    const upcoming = state.items.filter(it => it.date >= today).length;
 
     el.statTotal().textContent = state.items.length;
     el.statMonth().textContent = monthCnt;
@@ -270,7 +284,6 @@ const CalendarUI = (() => {
 
   // Drawer logic
   const openDrawer = (obj) => {
-    // If obj has id => edit, else create
     el.form().reset();
     el.id().value = obj.id || '';
     el.title().value = obj.title || '';
@@ -308,7 +321,7 @@ const CalendarUI = (() => {
     save(); render(); closeDrawer();
   };
 
-  // Public init and bindings
+  // Bindings
   const bind = () => {
     document.getElementById('prevBtn').addEventListener('click', () => { state.cursor.setMonth(state.cursor.getMonth()-1); render(); });
     document.getElementById('nextBtn').addEventListener('click', () => { state.cursor.setMonth(state.cursor.getMonth()+1); render(); });
@@ -335,6 +348,4 @@ const CalendarUI = (() => {
 
 document.addEventListener('DOMContentLoaded', CalendarUI.init);
 </script>
-
 {% endblock %}
-
